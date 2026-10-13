@@ -1,0 +1,776 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Conciliation médicamenteuse – version mobile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+  --bg:#EDF1F4;--card:#FFFFFF;--ink:#142230;--mut:#4D5B69;--line:#C9D3DC;
+  --acc:#1F4E79;--acc-ink:#FFFFFF;--acc-soft:#DCE7F2;
+  --warn:#9A4410;--warn-soft:#FBE4D4;--abs:#5A6672;--abs-soft:#E4E8EC;
+  --alert:#8A2F12;--alert-soft:#FCEDE6;--alr:#9B1C1C;--alr-bg:#FDE7E7;--alo:#7A4A00;--alo-bg:#FFF3DC;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0E161E;--card:#16212B;--ink:#E5ECF2;--mut:#9DABB8;--line:#2B3946;
+  --acc:#8DB8E6;--acc-ink:#0E161E;--acc-soft:#1D3247;
+  --warn:#F2A877;--warn-soft:#3B2517;--abs:#A9B4BF;--abs-soft:#25313C;
+  --alert:#F4A487;--alert-soft:#3A2019;--alr:#FFB4AB;--alr-bg:#3D1A1A;--alo:#F5C46B;--alo-bg:#3A2C10;}}
+:root[data-theme="dark"]{
+  --bg:#0E161E;--card:#16212B;--ink:#E5ECF2;--mut:#9DABB8;--line:#2B3946;
+  --acc:#8DB8E6;--acc-ink:#0E161E;--acc-soft:#1D3247;
+  --warn:#F2A877;--warn-soft:#3B2517;--abs:#A9B4BF;--abs-soft:#25313C;
+  --alert:#F4A487;--alert-soft:#3A2019;--alr:#FFB4AB;--alr-bg:#3D1A1A;--alo:#F5C46B;--alo-bg:#3A2C10;}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.4;-webkit-text-size-adjust:100%}
+.wrap{max-width:560px;margin:0 auto;padding:0 12px 120px}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding:12px 0 10px;display:flex;align-items:center;gap:10px}
+.pt{flex:1;display:flex;align-items:center;gap:8px;background:var(--card);border:2px solid var(--acc);border-radius:10px;padding:6px 10px}
+.pt label{font-weight:700;color:var(--acc);white-space:nowrap}
+.pt input{border:0;background:transparent;font:inherit;font-weight:600;color:var(--ink);width:100%;min-height:32px;outline:none}
+.ghost{min-height:44px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:14px;font-weight:500}
+.note{font-size:14px;color:var(--mut);background:var(--card);border:1px dashed var(--line);border-radius:10px;padding:10px 12px;margin-bottom:12px}
+.note b{color:var(--ink)}
+details.sec{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden}
+details.sec>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px;min-height:56px}
+details.sec>summary::-webkit-details-marker{display:none}
+.num{flex:none;width:30px;height:30px;border-radius:50%;background:var(--acc-soft);color:var(--acc);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
+.sec[open] .num{background:var(--acc);color:var(--acc-ink)}
+.st{flex:1;font-weight:600}
+.cnt{font-size:13px;color:var(--mut);font-variant-numeric:tabular-nums}
+.chev{width:18px;height:18px;flex:none;transition:transform .15s}
+.sec[open] .chev{transform:rotate(180deg)}
+.body{padding:2px 14px 16px;display:grid;grid-template-columns:1fr 1fr;gap:14px 12px}
+.fld{grid-column:1 / -1;display:flex;flex-direction:column;gap:6px;min-width:0}
+.fld.half{grid-column:auto}
+.fld>.lbl{font-size:14px;font-weight:600;color:var(--ink)}
+.hint{grid-column:1 / -1;font-size:13px;color:var(--warn);background:var(--warn-soft);border-radius:8px;padding:8px 10px}
+input.t,textarea.t{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;min-height:44px}
+textarea.t{min-height:88px;resize:vertical}
+input.t:focus,textarea.t:focus{outline:2px solid var(--acc);outline-offset:1px}
+.unit{display:flex;align-items:center;gap:8px}.unit span{color:var(--mut);font-size:14px;white-space:nowrap}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:44px;padding:0 14px;border-radius:22px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:15px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--acc);border-color:var(--acc);color:var(--acc-ink);font-weight:600}
+.alert .chip[aria-pressed="true"]{background:var(--alert);border-color:var(--alert)}
+.alert>.lbl{color:var(--alert)}
+.src{grid-column:1 / -1;border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.srch{display:flex;align-items:center;gap:10px}
+.code{flex:none;min-width:28px;height:26px;padding:0 6px;border-radius:6px;background:var(--acc);color:var(--acc-ink);font-weight:700;font-size:14px;display:inline-flex;align-items:center;justify-content:center}
+.srch .nm{flex:1;font-weight:600;font-size:15px}
+.srch .chip{min-height:40px;padding:0 12px;font-size:14px}
+.med{grid-column:1 / -1;border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.medh{display:flex;align-items:center;gap:8px}
+.medh .idx{font-weight:700;color:var(--acc);width:24px}
+.medh input{flex:1}
+.del{min-height:44px;min-width:44px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--mut);font:inherit;font-size:14px}
+.row3{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.poso{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.poso label{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px;color:var(--mut)}
+.poso input{text-align:center;padding:8px 4px}
+.sl{font-size:13px;color:var(--mut)}
+.srcs{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.sc{min-height:48px;border-radius:10px;border:1.5px dashed var(--line);background:transparent;color:var(--mut);font:inherit;font-weight:700;font-size:15px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;cursor:pointer}
+.sc small{font-size:11px;font-weight:500}
+.sc[data-s="ok"]{border:1.5px solid var(--acc);background:var(--acc-soft);color:var(--acc)}
+.sc[data-s="abs"]{border:1.5px solid var(--abs);background:var(--abs-soft);color:var(--abs)}
+.sc[data-s="diff"]{border:1.5px solid var(--warn);background:var(--warn-soft);color:var(--warn)}
+.diffs{display:flex;flex-direction:column;gap:6px}
+.diffs .unit span{min-width:96px;color:var(--warn);font-weight:600}
+.legend{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--mut)}
+.add{grid-column:1 / -1;min-height:48px;border-radius:10px;border:1.5px dashed var(--acc);background:transparent;color:var(--acc);font:inherit;font-weight:600;cursor:pointer}
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--card);border-top:1px solid var(--line);padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px))}
+.bar .in{max-width:560px;margin:0 auto;display:flex;gap:10px}
+.primary{flex:1;min-height:52px;border:0;border-radius:12px;background:var(--acc);color:var(--acc-ink);font:inherit;font-weight:700;font-size:17px;cursor:pointer}
+.danger{min-height:52px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--alert);font:inherit;font-weight:600;cursor:pointer}
+.danger.arm{background:var(--alert);color:#fff;border-color:var(--alert)}
+.modal{position:fixed;inset:0;z-index:10;background:rgba(10,18,26,.55);display:none;align-items:flex-end;justify-content:center}
+.modal.on{display:flex}
+.sheet{background:var(--card);width:100%;max-width:560px;max-height:100%;overflow:auto;border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:12px}
+.sheet h2{margin:0;font-size:19px}
+.qr{background:#fff;border-radius:10px;padding:10px;align-self:center;width:min(100%,340px)}
+.qr svg,.qr img{width:100%;height:auto;display:block}
+.pager{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.meta{font-size:13px;color:var(--mut)}
+pre.txt{white-space:pre-wrap;font-family:inherit;font-size:13px;background:var(--bg);border-radius:8px;padding:10px;margin:0;max-height:220px;overflow:auto}
+
+.reader{position:fixed;inset:0;z-index:20;background:var(--bg);overflow:auto;display:none;padding:calc(12px + env(safe-area-inset-top,0px)) 10px calc(24px + env(safe-area-inset-bottom,0px))}
+.reader.on{display:block}
+.paper{max-width:794px;margin:0 auto;background:#fff;color:#15181C;border-radius:6px;padding:18px 16px;display:flex;flex-direction:column;gap:10px;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.paper h1{margin:0;font-size:20px;line-height:1.15}
+.ptbox{border:2px solid #1F4E79;border-radius:4px;padding:4px 10px;font-weight:700;color:#1F4E79;align-self:flex-start}
+.rbar{background:#DCE6F0;color:#163A5C;font-weight:600;font-size:13px;padding:5px 8px;border-radius:3px}
+.rgrid{display:grid;grid-template-columns:minmax(0,1fr);gap:4px;font-size:14px}
+@media (min-width:600px){.rgrid{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:18px}}
+.rgrid div{border-bottom:1px dotted #9AA6B2;padding:3px 0}
+.rgrid b{font-weight:600}
+.rcode{display:inline-flex;min-width:22px;height:20px;align-items:center;justify-content:center;border-radius:3px;background:#1F4E79;color:#fff;font-weight:700;font-size:12px;margin-right:6px}
+.tscroll{overflow-x:auto}
+.rt{border-collapse:collapse;font-size:13px;min-width:640px;width:100%}
+.rt th,.rt td{border:1px solid #9AA6B2;padding:4px 5px;text-align:left}
+.rt th{background:#F0F3F6}
+.rt .c{text-align:center}
+.rt .ok{color:#1F4E79;font-weight:700}.rt .df{color:#8A3A0F;font-weight:700;background:#FBE6D8}.rt .ab{color:#5A6672}
+.rtop{max-width:794px;margin:0 auto 10px;display:flex;gap:10px;justify-content:space-between;align-items:center}
+.rtop .meta{flex:1}
+
+.print{position:absolute;left:-12000px;top:0}
+.pages{display:flex;flex-direction:column;align-items:center;gap:12px}
+.pw{overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.25);background:#fff}
+.pw>.a4{transform-origin:top left}
+.a4{width:794px;height:1123px;background:#fff;color:#15181C;font-family:"IBM Plex Sans",sans-serif;font-size:11.5px;line-height:1.3;padding:28px 32px;display:flex;flex-direction:column;gap:6px;overflow:hidden}
+.a4.land{width:1123px;height:794px}
+.a4 h1{margin:0;font-size:19px;font-weight:700}
+.a4 .hd{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.a4 .sub{color:#4A4F57;font-size:11px}
+.a4 .ptn{border:2px solid #1F4E79;border-radius:4px;padding:4px 10px;font-weight:700;color:#1F4E79;font-size:13px;white-space:nowrap}
+.a4 .ink{color:#1C3FAA;font-weight:500}
+.a4 .abar{background:#DCE6F0;color:#163A5C;font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;padding:3px 8px;border-radius:3px}
+.a4 .abox{border:1px solid #9AA6B2;border-radius:4px;padding:6px 8px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 16px}
+.a4 .it{display:flex;flex-wrap:wrap;align-items:flex-end;gap:2px 6px;min-width:0}
+.a4 .it.full{grid-column:1 / -1}
+.a4 .lb{font-weight:600}
+.a4 .dl{flex:1;min-width:50px;border-bottom:1px dotted #555;min-height:15px;padding-left:3px}
+.a4 .opt{white-space:nowrap;display:inline-flex;align-items:center;gap:3px;margin-right:4px}
+.a4 .bx{width:11px;height:11px;border:1.2px solid #15181C;border-radius:2px;display:inline-flex;align-items:center;justify-content:center;font-size:9px;line-height:1;color:#fff;flex:none}
+.a4 .bx.on{background:#1C3FAA;border-color:#1C3FAA}
+.a4 .area{width:100%;border:1px solid #C9D3DC;border-radius:3px;min-height:34px;padding:3px 6px;white-space:pre-line}
+.a4 table{border-collapse:collapse;width:100%}
+.a4 td,.a4 th{border:1px solid #9AA6B2;padding:3px 5px;text-align:left;vertical-align:middle;font-size:11.5px}
+.a4 th{background:#F0F3F6;font-weight:600}
+.a4 .c{text-align:center}
+.a4 .code{display:inline-flex;min-width:20px;height:18px;align-items:center;justify-content:center;border-radius:3px;background:#1F4E79;color:#fff;font-weight:700;font-size:11px}
+.a4 .df{background:#FBE6D8;color:#8A3A0F;font-weight:600}
+.a4{position:relative}
+.a4 .mk{position:absolute;width:14px;height:14px;background:#000}
+.a4 .mk.tl{top:14px;left:14px}.a4 .mk.tr{top:14px;right:14px}.a4 .mk.bl{bottom:14px;left:14px}.a4 .mk.br{bottom:14px;right:14px}
+.a4 .qrid{display:flex;align-items:center;gap:6px}.a4 .qrid .qt{font-size:10px;color:#4A4F57;text-align:right;white-space:nowrap;line-height:1.25}
+.a4 .qrid svg{width:58px;height:58px;display:block}
+.a4 .afoot{margin-top:auto;display:flex;justify-content:space-between;font-size:10.5px;color:#4A4F57}
+.svc{background:var(--card);border:2px solid var(--acc);border-radius:12px;padding:12px 14px;margin-bottom:10px;display:flex;flex-direction:column;gap:8px}
+.svch{font-weight:700;color:var(--acc)}
+.feuille{margin:0 0 10px;font-size:14px;font-weight:600;color:var(--acc)}
+.vbtn{grid-column:1 / -1;display:flex;flex-direction:column;gap:6px}
+.vage{font-size:17px;font-weight:700;color:var(--acc);background:var(--acc-soft);border-radius:10px;padding:10px 12px}
+.vtab{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.sheet>*{flex-shrink:0}
+.vtab div{display:grid;grid-template-columns:112px 1fr;gap:10px;padding:10px 12px;border-top:1px solid var(--line);font-size:15px}
+.vtab div:first-child{border-top:0}
+.vlink{display:flex;align-items:center;justify-content:center;text-decoration:none;text-align:center}
+.alerts{grid-column:1 / -1;display:flex;flex-direction:column;gap:6px}
+.al{border-left:4px solid;border-radius:8px;padding:7px 10px;font-size:13.5px;line-height:1.35}
+.al b{font-weight:700}
+.al a{display:block;margin-top:4px;color:inherit;font-weight:600}
+.al.r{border-color:var(--alr);background:var(--alr-bg);color:var(--alr)}
+.al.o{border-color:var(--alo);background:var(--alo-bg);color:var(--alo)}
+.al.k{border-color:var(--ink);background:var(--bg);color:var(--ink)}
+.dfgref{grid-column:1 / -1;margin:0;font-size:14px;font-weight:600;color:var(--acc)}
+.a4 .aal{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px 10px}
+.a4 .al{border-left:3px solid;border-radius:2px;padding:2px 6px;font-size:10px;line-height:1.25}
+.a4 .al.r{border-color:#B42318;background:#FDE7E7;color:#8F1D1D}
+.a4 .al.o{border-color:#C77700;background:#FFF3DC;color:#6B4200}
+.a4 .al.k{border-color:#15181C;background:#F0F3F6;color:#15181C}
+.a4 .ptn{max-width:360px;overflow:hidden;text-overflow:ellipsis}
+[hidden]{display:none !important}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.chev{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <div class="pt"><label for="pt">Patient</label><input id="pt" autocomplete="off" placeholder="Initiales (ex. DUP/MA)"></div>
+  <button class="ghost" id="demo" type="button">Exemple</button>
+</header>
+<p class="note"><b>Maquette de démonstration.</b> N'entrez pas de données réelles. Rien n'est enregistré, tout disparaît en fermant la page.</p>
+<div id="form"></div>
+</div>
+
+<div class="bar"><div class="in">
+  <button class="danger" id="clear" type="button">Effacer</button>
+  <button class="primary" id="gen" type="button">Générer le QR code</button>
+</div></div>
+
+<div class="reader" id="reader" role="dialog" aria-modal="true" aria-label="Fiche mise en page">
+  <div class="rtop"><span class="meta" id="rmeta"></span><button class="ghost" id="redit" type="button">Fermer</button></div>
+  <div class="rtop"><button class="primary" id="pdf" type="button">Télécharger le PDF</button></div>
+  <p class="meta" id="pdfmsg" style="max-width:794px;margin:0 auto 10px"></p>
+  <div class="pages" id="paper"></div>
+</div>
+<div class="modal" id="vacm" role="dialog" aria-modal="true" aria-labelledby="vact">
+  <div class="sheet">
+    <div class="pager"><h2 id="vact">Calendrier vaccinal 2026 · adulte</h2><button class="ghost" id="vacx" type="button">Fermer</button></div>
+    <div class="vage" id="vage"></div>
+    <div class="vtab">
+      <div><b>dTcaP</b><span>Rappels à 25, 45 et 65 ans, puis tous les 10 ans.</span></div>
+      <div><b>Grippe</b><span>Chaque automne dès 65 ans (et adultes à risque). Dès 65 ans, de préférence Efluelda ou Fluad.</span></div>
+      <div><b>COVID-19</b><span>Chaque automne dès 65 ans. Dose en plus au printemps : 80 ans et plus, résidents d’EHPAD ou USLD, personnes immunodéprimées.</span></div>
+      <div><b>Pneumocoque</b><span>Dose unique (Prevenar 20 ou Capvaxive) dès 65 ans et chez les adultes à risque.</span></div>
+      <div><b>Zona</b><span>2 doses à 2 mois d’intervalle dès 65 ans.</span></div>
+      <div><b>VRS</b><span>Dès 75 ans, ou dès 65 ans en cas de pathologie respiratoire chronique ou cardiaque.</span></div>
+    </div>
+    <p class="meta">Résumé des recommandations générales chez l’adulte, d’après le calendrier des vaccinations et recommandations vaccinales 2026 (ministère de la Santé). Il ne remplace pas le document officiel : les recommandations particulières (immunodépression, grossesse, professions, voyages…) sont à vérifier dans le calendrier complet.</p>
+    <a class="ghost vlink" href="https://sante.gouv.fr/prevention-en-sante/preserver-sa-sante/vaccination/calendrier-vaccinal" target="_blank" rel="noopener">Ouvrir le calendrier officiel (sante.gouv.fr)</a>
+  </div>
+</div>
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="qrt">
+  <div class="sheet">
+    <div class="pager"><h2 id="qrt">QR code</h2><button class="ghost" id="close" type="button">Fermer</button></div>
+    <p class="meta" id="qrmeta"></p>
+    <div class="qr" id="qr"></div>
+    <div class="pager" id="pager" hidden>
+      <button class="ghost" id="prev" type="button">Précédent</button>
+      <span class="meta" id="pnum"></span>
+      <button class="ghost" id="next" type="button">Suivant</button>
+    </div>
+    <button class="ghost" id="preview" type="button">Voir les feuilles A4 et le PDF</button>
+    <details><summary class="meta">Voir le contenu du QR code</summary><pre class="txt" id="qrtxt"></pre></details>
+    <p class="meta">Au poste : ouvrez d'abord le dossier du patient, vérifiez le nom du patient, puis scannez. Effacez ensuite la fiche sur ce téléphone.</p>
+  </div>
+</div>
+
+<script>
+var YN=['Oui','Non'];
+var S={};var MEDS=[];
+var show=function(k,v){return function(){var x=S[k];return Array.isArray(x)?x.indexOf(v)>=0:x===v}};
+var notShow=function(k,v){return function(){var x=S[k];return !(Array.isArray(x)?x.indexOf(v)>=0:x===v)}};
+var VS=['Fait','Non fait','Ne sait pas'];
+function vrow(k,l,y){return [{t:'one',k:k,l:l,o:VS},{t:'text',k:k+'_y',sh:'    dernière dose',l:y||'Année de la dernière dose',show:show(k,'Fait')}]}
+var VAC_SEC={id:'vac',title:'Vaccination',f:[{t:'vbtn'},
+ {t:'many',k:'vsrc',sh:'Statut vérifié avec',l:'Statut vérifié avec',o:['Patient','Carnet de vaccination','Officine','Médecin traitant']}]
+ .concat(vrow('v_dtp','dTcaP (diphtérie, tétanos, polio, coqueluche)'),vrow('v_gr','Grippe (saison en cours)'),vrow('v_co','COVID-19','Année de la dernière dose, nombre de doses'),vrow('v_pn','Pneumocoque'),vrow('v_zo','Zona'),vrow('v_vrs','VRS'))
+ .concat([{t:'text',k:'v_aut',l:'Autres vaccins'},
+ {t:'many',k:'vsuite',sh:'Suite donnée',l:'Suite donnée',o:['Rattrapage à signaler au médecin','Patient informé','Patient refuse','Rien à proposer']},
+ {t:'one',k:'v_acc',sh:'Accepte une intervention vaccinale',l:'Accepte une intervention vaccinale ?',o:YN},
+ {t:'text',k:'v_accq',sh:'Vaccin(s) accepté(s)',l:'Laquelle / lesquelles',show:show('v_acc','Oui')},
+ {t:'text',k:'vcom',l:'Commentaire vaccination'}])};
+var IX_SEC={id:'ix',title:'Interactions médicamenteuses',f:[
+ {t:'hint',l:'Analyse faite par vous : l\u2019outil ne détecte rien. Le Thésaurus ANSM n\u2019est plus mis à jour depuis 2023 ; l\u2019information de référence est dans le RCP de chaque médicament.'},
+ {t:'links'},
+ {t:'many',k:'ix_src',sh:'Sources consultées',l:'Sources consultées',o:['RCP (base publique)','Thériaque','Vidal','Thésaurus ANSM 2023','Autre']},
+ {t:'one',k:'ix_res',sh:'Résultat',l:'Résultat',o:['Aucune interaction relevée','Interaction(s) relevée(s)']},
+ {t:'area',k:'ix_list',sh:'Interactions relevées',l:'Interactions relevées (médicaments, mécanisme ou CYP, niveau)',show:show('ix_res','Interaction(s) relevée(s)')},
+ {t:'many',k:'ix_suite',sh:'Suite donnée',l:'Suite donnée',o:['Signalé au pharmacien','Signalé au médecin','À surveiller'],show:show('ix_res','Interaction(s) relevée(s)')},
+ {t:'text',k:'ix_com',l:'Commentaire'}
+]};
+var DPAOM=['D · Axigate (DPI)','P · Patient','A · Aidant / IDE','O · Ordonnance / officine','M · Médecin'];
+var IRC_ST=['G1 (≥ 90)','G2 (60–89)','G3a (45–59)','G3b (30–44)','G4 (15–29)','G5 (< 15)'];
+var ALC_CHR='Consommation chronique d’alcool';
+var PATHO=['Hépatopathie',ALC_CHR,'IRC','IRA','Insuffisance cardiaque','Inflammation / infection chronique','Dénutrition / hypoalbuminémie','Dysthyroïdie','Autre'];
+function hasP(v){return (S.patho||[]).indexOf(v)>=0}
+var OMEDIT='https://www.omedit-normandie.fr/boite-a-outils/bon-usage/liste-des-medicaments-ecrasables/liste-des-medicaments-ecrasables,3184,3511.html';
+var HAS_IPP='https://www.has-sante.fr/upload/docs/application/pdf/2022-09/fiche_bum_-_bon_usage_des_inhibiteurs_de_la_pompe_a_protons_ipp.pdf';
+var PATHO_F=[
+ {t:'many',k:'patho',sh:'Pathologies pouvant modifier la PK',l:'Pathologies pouvant modifier le métabolisme ou l’élimination',o:PATHO},
+ {t:'one',k:'p_hep',sh:'Hépatopathie',l:'Hépatopathie : type',o:['Cirrhose / insuffisance hépatocellulaire','Cytolyse'],show:function(){return hasP('Hépatopathie')}},
+ {t:'one',k:'p_irc',sh:'IRC (stade KDIGO)',l:'IRC : stade (choisi par vous)',o:IRC_ST,show:function(){return hasP('IRC')}},
+ {t:'dfgref',show:function(){return hasP('IRC')||hasP('IRA')}},
+ {t:'one',k:'p_thy',sh:'Dysthyroïdie',l:'Dysthyroïdie : type',o:['Hyperthyroïdie','Hypothyroïdie'],show:function(){return hasP('Dysthyroïdie')}}
+];
+function modShow(){var m=S.mod||[];return m.indexOf('Comprimé écrasé')>=0||m.indexOf('Gélule ouverte')>=0}
+var COM_SEC={id:'com',title:'Commentaires de conciliation',f:[{t:'area',k:'com',sh:'Commentaires',l:''}]};
+var REV_SEC={id:'rev',title:'Avis du relecteur',f:[
+ {t:'one',k:'rv_qui',sh:'Relu par',l:'Relu par',o:['Pharmacien','Interne','Externe']},
+ {t:'text',k:'rv_nom',sh:'Nom du relecteur',l:'Nom du relecteur'},
+ {t:'one',k:'rv_pert',sh:'Conciliation jugée',l:'Conciliation jugée',o:['Pertinente','Partiellement pertinente','Non pertinente']},
+ {t:'area',k:'rv_com',sh:'Commentaire du relecteur',l:'Commentaire du relecteur'}
+]};
+var SEC_MED=[
+{id:'rec',title:'Recueil et patient',f:[
+ {t:'date',k:'date',l:'Date',half:1},{t:'text',k:'par',l:'Recueil par',half:1},
+ {t:'time',k:'h1',l:'Heure de début',half:1},{t:'time',k:'h2',l:'Heure de fin',half:1},
+ {t:'one',k:'incl',l:'Inclusion',o:['> 65 ans + urgences + domicile','Demande du médecin']},
+ {t:'text',k:'nom',sh:'Patient (initiales)',l:'Initiales (3 lettres du nom / 2 du prénom)'},{t:'text',k:'iep',l:'IEP',half:1},{t:'one',k:'sexe',l:'Sexe',o:['M','F'],half:1},
+ {t:'date',k:'ddn',l:'Date de naissance',half:1},{t:'num',k:'age',l:'Âge',u:'ans',half:1},
+ {t:'date',k:'entree',l:"Date d'entrée",half:1},{t:'text',k:'chambre',l:'Chambre',half:1},
+ {t:'one',k:'vie',l:'Lieu de vie',o:['Domicile seul','Domicile + aidant','Famille','EHPAD']},
+ {t:'one',k:'all',l:'Allergies',o:['Aucune connue','Oui'],alert:1},
+ {t:'text',k:'allq',l:'Lesquelles',show:show('all','Oui'),alert:1}
+]},
+{id:'src',title:"Sources d'information",f:[
+ {t:'hint',l:'Les codes D, P, A, O, M sont les colonnes du bilan. Objectif HAS : au moins 3 sources.'},
+ {t:'src',k:'sD',c:'D',l:'Axigate (DPI)'},
+ {t:'src',k:'sP',c:'P',l:'Entretien patient',ph:'Remarque'},
+ {t:'src',k:'sA1',c:'A',l:'Aidant / famille',ph:'Nom, téléphone'},
+ {t:'src',k:'sA2',c:'A',l:'IDEL',ph:'Nom, téléphone'},
+ {t:'src',k:'sO',c:'O',l:'Officine + ordonnances',ph:'Nom, téléphone, mail'},
+ {t:'src',k:'sM1',c:'M',l:'Médecin traitant',ph:'Dr …, téléphone'},
+ {t:'src',k:'sM2',c:'M',l:'Spécialiste',ph:'Dr …, spécialité'},
+ {t:'src',k:'sM3',c:'M',l:'Spécialiste',ph:'Dr …, spécialité'},
+ {t:'src',k:'sM4',c:'M',l:'Spécialiste',ph:'Dr …, spécialité'},
+ {t:'src',k:'sM5',c:'M',l:'Spécialiste',ph:'Dr …, spécialité'}
+]},
+{id:'ges',title:'Médicaments prescrits et gestion',f:[
+ {t:'one',k:'gere',sh:'Qui gère',l:'Qui gère les traitements ?',o:['Patient','IDEL','Famille']},
+ {t:'one',k:'pil',l:'Pilulier',o:YN,half:1},{t:'one',k:'pili',sh:'Souhaite un pilulier',l:'Si non, souhaite un pilulier ?',o:YN,half:1,show:show('pil','Non')},
+ {t:'yn',k:'freq',sh:'Fréquence particulière',l:'Fréquence particulière (1/sem, 1/mois)',d:'Lequel'},
+ {t:'text',k:'tol',l:"Tolérance aux traitements d'entrée"},
+ {t:'yn',k:'modif',l:'Modification ou arrêt récent',d:'Pourquoi'},
+ {t:'yn',k:'anti',l:'Anti-infectieux récent',d:'Lequel'} 
+]},
+COM_SEC,
+VAC_SEC,
+{id:'gal',title:'Formes galéniques et automédication',f:[
+ {t:'hint',l:'Chaque « oui » devient une ligne du bilan.'},
+ {t:'yn',k:'ipp',l:'IPP',d:'Lequel'},{t:'lnk',href:HAS_IPP,l:'Vérifier l\u2019indication : bon usage des IPP (HAS 2022)',show:show('ipp','Oui')},{t:'text',k:'ippi',l:'Indication de l\u2019IPP',show:show('ipp','Oui')},
+ {t:'yn',k:'col',l:'Collyre',d:'Lequel'},{t:'one',k:'col_eye',sh:'Collyre : œil',l:'Œil',o:['Deux yeux','Œil gauche','Œil droit'],show:show('col','Oui')},
+ {t:'yn',k:'inh',l:'Inhalateur',d:'Lequel'},{t:'one',k:'qinh',sh:'Questionnaire inhalateur',l:'Questionnaire observance inhalateur réalisé ?',o:YN,show:show('inh','Oui')},
+ {t:'yn',k:'ins',l:'Instillation nez, oreille',d:'Lequel'},{t:'yn',k:'pat',l:'Patch, crème, pommade',d:'Lequel'},
+ {t:'yn',k:'buv',l:'Solution buvable',d:'Lequel'},{t:'yn',k:'ovu',l:'Ovule, suppositoire',d:'Lequel'},
+ {t:'yn',k:'ho',sh:'Hors ordonnance',l:'Hors ordonnance (douleur, troubles digestifs)',d:'Lequel'},
+ {t:'yn',k:'phy',l:'Phytothérapie, tisane',d:'Lequel'},{t:'yn',k:'cpl',l:'Compléments alimentaires',d:'Lequel'},
+ {t:'one',k:'mil',l:'Millepertuis',o:YN,half:1},{t:'one',k:'pam',l:'Pamplemousse',o:YN,half:1}
+]},
+{id:'obs',title:"Test d'observance",f:[
+ {t:'many',k:'obsnc',l:'',o:['Non concerné (IDE)']},
+ {t:'num',k:'o1',sh:'Pannes de médicaments (fois/mois)',l:'Combien de fois par mois estimez-vous tomber en panne de médicaments ?',show:notShow('obsnc','Non concerné (IDE)')},
+ {t:'num',k:'o2',sh:'Oublis (fois/mois)',l:'Combien de fois par mois estimez-vous oublier vos médicaments ?',show:notShow('obsnc','Non concerné (IDE)')},
+ {t:'text',k:'o2q',sh:'Médicaments surtout oubliés',l:'Lesquels principalement ?',show:notShow('obsnc','Non concerné (IDE)')},
+ {t:'text',k:'o3',sh:'Non pris car ressentis comme néfastes',l:'Y a-t-il des médicaments que vous ne prenez pas parce que vous les ressentez comme néfastes pour vous ? Lesquels ?',show:notShow('obsnc','Non concerné (IDE)')},
+ {t:'text',k:'o4',sh:'Médicaments en trop selon le patient',l:'Pour vous, quels médicaments sont en trop sur vos ordonnances ?',show:notShow('obsnc','Non concerné (IDE)')}
+]},
+{id:'cli',title:'Informations clinico-biologiques',f:[
+ {t:'num',k:'poids',l:'Poids',u:'kg',half:1},{t:'num',k:'imc',l:'IMC',u:'kg/m²',half:1},
+ {t:'num',k:'creat',l:'Créatinine',u:'µmol/L',half:1},{t:'num',k:'dfg',sh:'DFG',l:'DFG (mL/min/1,73 m²)',half:1},
+ {t:'one',k:'form',l:'Formule du DFG',o:['EKFC','CKD-EPI','Autre']},
+ {t:'area',k:'motif',l:"Motif d'hospitalisation"},
+ {t:'area',k:'atcd',sh:'Antécédents',l:'Antécédents (un par ligne)',big:1}
+].concat(PATHO_F)},
+{id:'que',title:'Questions',f:[
+ {t:'one',k:'chute',l:'Antécédents de chutes',o:YN},
+ {t:'num',k:'nch',l:'Nombre de chutes sur 12 mois',show:show('chute','Oui')},
+ {t:'text',k:'cch',l:'Circonstances',show:show('chute','Oui')},
+ {t:'many',k:'qch',l:'Conséquences',o:['Fracture','Hospitalisation','Aucune'],show:show('chute','Oui')},
+ {t:'many',k:'trb',l:'Troubles',o:['Vision','Tremblements','Constipation','Diarrhée','Sommeil']},
+ {t:'one',k:'tab',l:'Tabac',o:['Non','Oui','Sevré'],half:1},{t:'one',k:'alc',l:'Alcool',o:['Non','Oui','Sevré'],half:1},
+ {t:'text',k:'tabs',l:'Tabac : sevré depuis',show:show('tab','Sevré')},
+ {t:'one',k:'deg',l:'Troubles de la déglutition',o:YN},
+ {t:'many',k:'degi',sh:'Déglutition : source',l:'Information donnée par',o:DPAOM,show:show('deg','Oui')},
+ {t:'many',k:'mod',l:'Médicaments modifiés',o:['Aucun','Comprimé écrasé','Gélule ouverte']},
+ {t:'text',k:'modq',l:'Lesquels',show:modShow},
+ {t:'many',k:'mods',sh:'Écrasé / ouvert : source',l:'Information donnée par',o:DPAOM,show:modShow}
+]},
+{id:'bil',title:'Bilan médicamenteux',f:[{t:'alerts'},{t:'meds'}]},
+IX_SEC,
+REV_SEC,
+{id:'inh',title:'Questionnaire inhalateurs',show:function(){return S.inh==='Oui'&&S.qinh==='Oui'},f:[
+ {t:'hint',l:"D'après la fiche de [Dr NOM], docteure junior. À remplir si le questionnaire est réalisé."},
+ {t:'one',k:'i_pat',l:'Pathologie principale',o:['Asthme','BPCO','Autre']},
+ {t:'yn',k:'i_pneu',l:'Suivi par un pneumologue',d:'Fréquence'},
+ {t:'one',k:'i_avec',l:'A son/ses inhalateur(s) avec lui',o:YN},
+ {t:'one',k:'i_app',l:'Si non, peut les faire apporter',o:YN,show:show('i_avec','Non')},
+ {t:'yn',k:'i_nom',l:'Peut citer le nom de ses inhalateurs',d:'Lesquels'},
+ {t:'one',k:'i_role',l:'Sait à quoi sert chacun',o:['Oui','Partiellement','Non']},
+ {t:'text',k:'i_fs',l:'Fond / secours',show:function(){return S.i_role==='Oui'||S.i_role==='Partiellement'}},
+ {t:'one',k:'i_mom',l:'Connaît les moments de prise',o:['Oui','Non','Ne sait pas']},
+ {t:'many',k:'i_qui',l:"Qui lui a expliqué l'usage",o:['Pneumologue','Médecin traitant','Pharmacien','Infirmier','Aucun','Autre']},
+ {t:'one',k:'i_fond',l:'Prend son traitement de fond même sans symptômes',o:['Tous les jours','Souvent',"Quand j'y pense",'Rarement','Jamais','Autre']},
+ {t:'yn',k:'i_oub',l:"Oubli d'une prise sur 7 jours",d:'Combien de fois'},
+ {t:'one',k:'i_que',l:"Que fait-il en cas d'oubli",o:["Prend dès qu'il s'en rend compte",'Double la dose','Saute la prise',"N'oublie jamais",'Autre']},
+ {t:'text',k:'i_mM',l:'Matin',half:1},{t:'text',k:'i_mMi',l:'Midi',half:1},{t:'text',k:'i_m16',l:'16 h',half:1},{t:'text',k:'i_mS',l:'Soir',half:1},{t:'text',k:'i_mC',l:'Coucher',half:1},
+ {t:'yn',k:'i_cri',l:'Traitement de crise',d:'Nom'},
+ {t:'one',k:'i_7j',l:'Utilisation de la crise sur 7 jours',o:['Pas utilisé','Utilisé']},
+ {t:'text',k:'i_7n',l:'Combien de fois',show:show('i_7j','Utilisé')},
+ {t:'yn',k:'i_chg',l:"Déjà changé de forme d'inhalateur",d:'Lequel'},
+ {t:'one',k:'i_dem',l:'Démonstration reçue',o:['Oui, < 6 mois','Oui, > 6 mois','Non']},
+ {t:'one',k:'i_ch',l:"Utilise une chambre d'inhalation",o:YN},
+ {t:'one',k:'i_ais',l:'À l\u2019aise avec ses inhalateurs',o:['Oui','Non','Pas sûr(e)']},
+ {t:'many',k:'i_pb',l:'Problèmes techniques',o:["Ouvrir, manipuler l'inhalateur",'Coordonner la respiration',"Utiliser la chambre d'inhalation",'Savoir si la dose a été prise','Aucune difficulté','Autre']},
+ {t:'one',k:'i_new',l:'Souhaite une nouvelle démonstration ou des conseils',o:YN}
+]}
+];
+
+var SEC_CHIR=[
+{id:'rec',title:'Recueil et informations générales',f:[
+ {t:'date',k:'date',l:'Date',half:1},{t:'text',k:'par',l:'Recueil par',half:1},
+ {t:'time',k:'h1',l:'Heure de début',half:1},{t:'time',k:'h2',l:'Heure de fin',half:1},
+ {t:'text',k:'nom',sh:'Patient (initiales)',l:'Initiales (3 lettres du nom / 2 du prénom)'},{t:'text',k:'iep',l:'IEP',half:1},{t:'one',k:'sexe',l:'Sexe',o:['M','F'],half:1},
+ {t:'date',k:'ddn',l:'Date de naissance',half:1},{t:'num',k:'age',l:'Âge',u:'ans',half:1},
+ {t:'date',k:'entree',l:"Date d'entrée",half:1},{t:'text',k:'chambre',l:'Chambre',half:1},
+ {t:'text',k:'telp',l:'Téléphone du patient'},
+ {t:'one',k:'all',l:'Allergies',o:['Aucune connue','Oui'],alert:1},
+ {t:'text',k:'allq',l:'Lesquelles',show:show('all','Oui'),alert:1}
+]},
+SEC_MED[1],
+{id:'ges',title:'Médicaments prescrits',f:[
+ {t:'one',k:'gere',l:'Qui gère les traitements ?',o:['Patient','IDEL','Famille']},
+ {t:'one',k:'pil',l:'Pilulier',o:YN,half:1},{t:'one',k:'pili',sh:'Souhaite un pilulier',l:'Si non, souhaite un pilulier ?',o:YN,half:1,show:show('pil','Non')},
+ {t:'yn',k:'freq',sh:'Fréquence particulière',l:'Fréquence particulière (1/semaine, 1/mois)',d:'Lequel'},
+ {t:'text',k:'tol',l:"Tolérance aux traitements d'entrée"},
+ {t:'yn',k:'modif',l:'Modification ou arrêt récent',d:'Pourquoi'},
+ {t:'yn',k:'anti',l:'Anti-infectieux récent',d:'Lequel'}
+]},
+COM_SEC,
+VAC_SEC,
+{id:'gal',title:'Formes galéniques et automédication',f:[
+ {t:'hint',l:'Chaque « oui » devient une ligne du bilan.'},
+ {t:'yn',k:'ipp',l:'IPP',d:'Lequel'},{t:'lnk',href:HAS_IPP,l:'Vérifier l\u2019indication : bon usage des IPP (HAS 2022)',show:show('ipp','Oui')},{t:'text',k:'ippi',l:'Indication de l\u2019IPP',show:show('ipp','Oui')},
+ {t:'yn',k:'col',l:'Collyre',d:'Lequel'},{t:'one',k:'col_eye',sh:'Collyre : œil',l:'Œil',o:['Deux yeux','Œil gauche','Œil droit'],show:show('col','Oui')},
+ {t:'yn',k:'ins',l:'Instillation nez, oreille',d:'Lequel'},
+ {t:'yn',k:'inh',l:'Inhalateur',d:'Lequel'},{t:'yn',k:'pat',l:'Patch, crème, pommade',d:'Lequel'},
+ {t:'yn',k:'buv',l:'Solution buvable',d:'Lequel'},{t:'yn',k:'ovu',l:'Ovule, suppositoire',d:'Lequel'},
+ {t:'yn',k:'ho',sh:'Hors ordonnance',l:'Hors ordonnance (douleur, troubles digestifs)',d:'Lequel'},
+ {t:'yn',k:'phy',l:'Phytothérapie, tisane',d:'Lequel'},
+ {t:'one',k:'mil',l:'Millepertuis',o:YN,half:1},{t:'one',k:'pam',l:'Pamplemousse',o:YN,half:1},
+ {t:'yn',k:'cpl',l:'Compléments alimentaires',d:'Lequel'},{t:'yn',k:'epi',l:'Épices',d:'Lequel'}
+]},
+{id:'obs',title:"Test d'observance",f:[
+ {t:'one',k:'obsr',sh:'Observance',l:'Résultat',o:['Non concerné (IDE)','Observant','Non observant']},
+ {t:'one',k:'o1',sh:'Panne de médicaments',l:'Vous arrive-t-il de tomber en panne de médicaments ?',o:YN,show:notShow('obsr','Non concerné (IDE)')},
+ {t:'one',k:'o2',sh:'Oublis',l:"Vous arrive-t-il d'oublier de prendre vos médicaments ?",o:YN,show:notShow('obsr','Non concerné (IDE)')},
+ {t:'one',k:'o3',sh:'Ne prend pas car plus de mal que de bien',l:"Vous arrive-t-il de ne pas prendre vos traitements parce que certains jours vous avez l'impression qu'ils vous font plus de mal que de bien ?",o:YN,show:notShow('obsr','Non concerné (IDE)')},
+ {t:'one',k:'o4',sh:'Trop de comprimés',l:'Pensez-vous que vous avez trop de comprimés à prendre ?',o:YN,show:notShow('obsr','Non concerné (IDE)')},
+ {t:'hint',l:'Lecture : 0 oui = observant, plus de 2 oui = non observant.',show:notShow('obsr','Non concerné (IDE)')}
+]},
+{id:'cli',title:'Informations clinico-biologiques',f:[
+ {t:'num',k:'poids',l:'Poids',u:'kg',half:1},{t:'num',k:'imc',l:'IMC',u:'kg/m²',half:1},
+ {t:'num',k:'creat',l:'Créatinine',u:'µmol/L',half:1},{t:'num',k:'dfg',sh:'DFG',l:'DFG (mL/min/1,73 m²)',half:1},
+ {t:'one',k:'form',l:'Formule du DFG',o:['EKFC','CKD-EPI','Autre']},
+ {t:'area',k:'motif',l:"Motif d'hospitalisation"},
+ {t:'area',k:'atcd',sh:'Antécédents',l:'Antécédents : FR et comorbidités (un par ligne)',big:1}
+].concat(PATHO_F)},
+{id:'que',title:'Questions',f:[
+ {t:'one',k:'chute',l:'Antécédents de chutes',o:YN},
+ {t:'num',k:'nch',l:'Nombre de chutes sur 12 mois',show:show('chute','Oui')},
+ {t:'many',k:'qch',l:'Conséquences',o:['Fracture','Hospitalisation','Aucune'],show:show('chute','Oui')},
+ {t:'many',k:'trb',l:'Troubles',o:['Vision','Tremblements','Constipation','Diarrhée','Sommeil','Déglutition']},
+ {t:'many',k:'degi',sh:'Déglutition : source',l:'Déglutition : information donnée par',o:DPAOM,show:show('trb','Déglutition')},
+ {t:'yn',k:'modc',l:'Comprimé écrasé / gélule ouverte',d:'Lequel'},
+ {t:'many',k:'mods',sh:'Écrasé / ouvert : source',l:'Information donnée par',o:DPAOM,show:show('modc','Oui')},
+ {t:'one',k:'alc',l:'Alcool',o:['Oui','Non','Sevrage envisagé']},
+ {t:'one',k:'tab',l:'Tabac',o:['Oui','Non','Sevrage envisagé']},
+ {t:'text',k:'tabc',l:'Sevrage tabac : comment',show:show('tab','Sevrage envisagé')},
+ {t:'yn',k:'subn',l:'Substituts nicotiniques',d:'Lequel'},
+ {t:'one',k:'stu',l:'Stupéfiants',o:['Oui','Non','Sevrage envisagé']},
+ {t:'one',k:'irs',l:'Insuffisance respiratoire',o:YN,half:1},{t:'one',k:'diab',l:'Diabète',o:['Type 1','Type 2','Non'],half:1},
+ {t:'text',k:'acho',l:'Score anticholinergique'}
+]},
+SEC_MED.filter(function(x){return x.id==='bil'})[0],
+IX_SEC,
+REV_SEC
+];
+var UF_MED=['1901','2134','2135','2385','4829'],UF_CHIR=['5890','2331','5594'];
+function isChir(){return UF_CHIR.indexOf(S.uf)>=0}
+var SECTIONS=SEC_MED;
+function title(){return isChir()?'Conciliation médicamenteuse – chirurgie thoracique / orthopédie':'Conciliation médicamenteuse à l\u2019admission'}
+var SRC=['D','P','A','O','M'];
+function letters(a){return (a||[]).map(function(x){return x.charAt(0)}).join(', ')}
+function srcTxt(k){var l=letters(S[k]);return l?' (source : '+l+')':''}
+function dfgTxt(){return filled(S.dfg)?' · DFG saisi : '+String(S.dfg).trim()+(filled(S.form)?' ('+S.form+')':''):''}
+var IRC_LIB={G1:'normal ou élevé',G2:'légèrement diminué',G3a:'légèrement à modérément diminué',G3b:'modérément à sévèrement diminué',G4:'sévèrement diminué',G5:'insuffisance rénale terminale'};
+function alerts(){
+ var A=[];function a(lv,t,d,link){A.push({lv:lv,t:t,d:d,link:link})}
+ var ch=isChir(),P=S.patho||[];
+ if(ch?(S.trb||[]).indexOf('Déglutition')>=0:S.deg==='Oui')a('r','Troubles de la déglutition'+srcTxt('degi'),'risque de fausse route avec les formes orales solides.');
+ if(ch?S.modc==='Oui':modShow()){var lst=ch?S.modc_d:S.modq;var lab=ch?'Comprimé écrasé / gélule ouverte':(S.mod||[]).filter(function(x){return x!=='Aucun'}).join(' / ');
+  a('o',lab+srcTxt('mods'),'forme galénique possiblement altérée (libération prolongée, gastro-résistante…) → ADME possiblement modifié.'+(filled(lst)?' Médicaments concernés : '+String(lst).trim()+'.':''),{href:OMEDIT,l:'Liste des médicaments écrasables (OMéDIT Normandie / SFPC)'})}
+ if(S.chute==='Oui'){var n=parseInt(S.nch,10);var q=(S.qch||[]).filter(function(x){return x!=='Aucune'});var grave=q.length>0;
+  var lv=(grave||n>=2)?'r':(n===0?'k':'o');
+  var t=n>=2?'Chutes répétées ('+n+' sur 12 mois)':n===1?'Chute (1 sur 12 mois)':n===0?'Antécédent de chute (aucune sur 12 mois)':'Antécédent de chute';
+  if(grave)t+=' · '+q.join(', ').toLowerCase();
+  a(lv,t,'médicaments à risque de chute : benzodiazépines et apparentés, antipsychotiques, antidépresseurs, antiépileptiques, opioïdes, antihistaminiques sédatifs, antihypertenseurs (centraux, alpha-bloquants) et diurétiques, vasodilatateurs cardiaques, médicaments vésicaux, hypoglycémiants.')}
+ if(P.indexOf('IRC')>=0){var g=(S.p_irc||'').split(' ')[0];var lv2=/G4|G5/.test(g)?'r':/G3/.test(g)?'o':(g?'k':'o');
+  a(lv2,'IRC'+(g?' stade '+g+' ('+IRC_LIB[g]+')':'')+dfgTxt(),'élimination rénale diminuée.')}
+ if(P.indexOf('IRA')>=0)a('r','IRA'+dfgTxt(),'fonction rénale instable : le DFG estimé à partir de la créatinine n’est pas fiable.');
+ if(P.indexOf('Hépatopathie')>=0){if(S.p_hep==='Cytolyse')a('o','Hépatopathie : cytolyse','le bilan hépatique ne reflète pas de façon fiable la capacité de métabolisme des médicaments.');
+  else a('o','Hépatopathie'+(S.p_hep?' : '+S.p_hep.toLowerCase():''),'métabolisme hépatique diminué (phase I / CYP surtout), débit sanguin hépatique diminué, volume de distribution possiblement augmenté (ascite).')}
+ if(P.indexOf(ALC_CHR)>=0)a('o',ALC_CHR,'induction du CYP2E1 et atteinte hépatique possible.');
+ if(S.tab==='Oui')a('o','Tabac fumé','induction du CYP1A2 par la fumée (pas par la nicotine : les substituts nicotiniques n’ont pas cet effet). Arrêt, dont arrêt forcé à l’hospitalisation : fin de l’induction en 2 à 3 semaines.');
+ else if(S.tab==='Sevré'||S.tab==='Sevrage envisagé')a('o','Arrêt du tabac'+(S.tab==='Sevré'&&filled(S.tabs)?' (sevré depuis '+S.tabs.trim()+')':''),'fin de l’induction du CYP1A2 en 2 à 3 semaines.');
+ if(P.indexOf('Insuffisance cardiaque')>=0)a('o','Insuffisance cardiaque','clairance rénale possiblement diminuée (hypoperfusion) ; volume de distribution et fixation protéique possiblement modifiés.');
+ if(P.indexOf('Inflammation / infection chronique')>=0)a('o','Inflammation / infection chronique','diminution possible de l’activité de certains CYP, surtout CYP3A4.');
+ if(P.indexOf('Dénutrition / hypoalbuminémie')>=0)a('o','Dénutrition / hypoalbuminémie','fixation protéique diminuée : fraction libre des médicaments fortement liés possiblement augmentée.');
+ if(P.indexOf('Dysthyroïdie')>=0){var th=S.p_thy;a('o','Dysthyroïdie'+(th?' : '+th.toLowerCase():''),th==='Hyperthyroïdie'?'clairance hépatique possiblement augmentée, selon les médicaments.':th==='Hypothyroïdie'?'clairance hépatique possiblement diminuée, selon les médicaments.':'hyperthyroïdie : clairance possiblement augmentée ; hypothyroïdie : possiblement diminuée, selon les médicaments.')}
+ if(P.indexOf('Autre')>=0)a('k','Autre pathologie','pouvant modifier la pharmacocinétique (ADME) : vérifier les précautions d’emploi dans le RCP des médicaments concernés.');
+ var ord={r:0,o:1,k:2};return A.map(function(x,i){x.i=i;return x}).sort(function(x,y){return ord[x.lv]-ord[y.lv]||x.i-y.i})}
+var NOF={hint:1,vbtn:1,links:1,lnk:1,dfgref:1,alerts:1,meds:1};function skip(f){return !!NOF[f.t]}
+
+function el(tag,attrs,kids){var e=document.createElement(tag);if(attrs)for(var a in attrs){if(a==='text')e.textContent=attrs[a];else if(a==='cls')e.className=attrs[a];else if(a.slice(0,2)==='on')e.addEventListener(a.slice(2),attrs[a]);else e.setAttribute(a,attrs[a])}(kids||[]).forEach(function(k){if(k)e.appendChild(k)});return e}
+function input(k,type,ph){var i=el('input',{cls:'t',type:type||'text',placeholder:ph||'','aria-label':ph||k,'data-k':k});i.value=S[k]||'';i.addEventListener('input',function(){S[k]=i.value;if(k==='nom')document.getElementById('pt').value=i.value;refresh()});return i}
+var CHIPP=[],DYN=[],ALBOX=[];
+function onSet(k){}
+function chips(k,opts,multi){var box=el('div',{cls:'chips'});function paint(){Array.prototype.forEach.call(box.children,function(c){var t=c.textContent;c.setAttribute('aria-pressed',(multi?(S[k]||[]).indexOf(t)>=0:S[k]===t)?'true':'false')})}opts.forEach(function(o){var b=el('button',{cls:'chip',type:'button',text:o});b.addEventListener('click',function(){if(multi){var a=(S[k]||[]).slice();var i=a.indexOf(o);if(i>=0)a.splice(i,1);else a.push(o);S[k]=a}else{S[k]=S[k]===o?'':o}onSet(k);refresh()});box.appendChild(b)});paint();CHIPP.push(paint);return box}
+var VIS=[];
+function field(f){
+ var w;
+ if(f.t==='hint'){w=el('p',{cls:'hint',text:f.l})}
+ else if(f.t==='lnk'){w=el('div',{cls:'vbtn'},[el('a',{cls:'ghost vlink',href:f.href,target:'_blank',rel:'noopener',text:f.l})])}
+ else if(f.t==='dfgref'){w=el('p',{cls:'dfgref'});DYN.push({e:w,fn:function(){return filled(S.dfg)?'DFG saisi : '+String(S.dfg).trim()+(filled(S.form)?' ('+S.form+')':'')+' · à comparer avec le stade choisi':'DFG non saisi (champ DFG plus haut)'}})}
+ else if(f.t==='alerts'){w=el('div',{cls:'alerts'});ALBOX.push(w)}
+ else if(f.t==='links'){w=el('div',{cls:'vbtn'},[['RCP · base publique des médicaments','https://base-donnees-publique.medicaments.gouv.fr/'],['Thériaque','https://www.theriaque.org/'],['Thésaurus ANSM (archive 2023)','https://ansm.sante.fr/documents/reference/thesaurus-des-interactions-medicamenteuses-1']].map(function(x){return el('a',{cls:'ghost vlink',href:x[1],target:'_blank',rel:'noopener',text:x[0]})}))}
+ else if(f.t==='vbtn'){w=el('div',{cls:'vbtn'},[el('button',{cls:'ghost',type:'button',text:'Voir le calendrier vaccinal 2026',onclick:openVac}),el('span',{cls:'sl',text:'Âge et calendrier côte à côte, sans analyse : la comparaison reste à faire par vous.'})])}
+ else if(f.t==='src'){
+  var ok=el('div',{cls:'chips'});
+  var pq=input(f.k+'_pq','text','Non obtenue : pourquoi ?');VIS.push({e:pq,fn:function(){return S[f.k+'_ok']==='Non'}});
+  w=el('div',{cls:'src'},[el('div',{cls:'srch'},[el('span',{cls:'code',text:f.c}),el('span',{cls:'nm',text:f.l}),chips(f.k+'_ok',['Obtenue','Non'])]),pq,f.c==='D'?null:input(f.k+'_c','text',f.ph)]);
+ }
+ else if(f.t==='meds'){return medsField()}
+ else{
+  w=el('div',{cls:'fld'+(f.half?' half':'')+(f.alert?' alert':'')});
+  if(f.l)w.appendChild(el('span',{cls:'lbl',text:f.l}));
+  if(f.t==='text')w.appendChild(input(f.k,'text',f.l));
+  if(f.t==='date')w.appendChild(input(f.k,'date',f.l));
+  if(f.t==='time')w.appendChild(input(f.k,'time',f.l));
+  if(f.t==='num'){var i=input(f.k,'text',f.l);i.setAttribute('inputmode','decimal');w.appendChild(f.u?el('div',{cls:'unit'},[i,el('span',{text:f.u})]):i)}
+  if(f.t==='area'){var a=el('textarea',{cls:'t','aria-label':f.l});if(f.big)a.style.minHeight='140px';a.value=S[f.k]||'';a.addEventListener('input',function(){S[f.k]=a.value;refresh()});w.appendChild(a)}
+  if(f.t==='one')w.appendChild(chips(f.k,f.o,false));
+  if(f.t==='many')w.appendChild(chips(f.k,f.o,true));
+  if(f.t==='yn'){w.appendChild(chips(f.k,YN,false));var d=input(f.k+'_d','text',f.d);w.appendChild(d);VIS.push({e:d,fn:show(f.k,'Oui')})}
+ }
+ if(f.show)VIS.push({e:w,fn:f.show});
+ return w;
+}
+function medsField(){
+ var box=el('div',{cls:'fld'});
+ box.appendChild(el('div',{cls:'legend'},[el('span',{text:'Touchez une source pour changer :'}),el('span',{text:'vide = non consultée'}),el('span',{text:'✓ = confirme'}),el('span',{text:'✗ = absent'}),el('span',{text:'≠ = diffère'})]));
+ var list=el('div',{cls:'fld'});box.appendChild(list);
+ function draw(){list.innerHTML='';MEDS.forEach(function(m,ix){list.appendChild(medCard(m,ix,draw))});refresh()}
+ box.appendChild(el('button',{cls:'add',type:'button',text:'Ajouter un médicament',onclick:function(){MEDS.push(newMed());draw();var ins=list.querySelectorAll('.med');var last=ins[ins.length-1];if(last)last.querySelector('input').focus()}}));
+ draw();return box;
+}
+function newMed(){return {dci:'',forme:'',dos:'',p:['','','',''],s:{D:'',P:'',A:'',O:'',M:''},v:{},st:'',rem:''}}
+function medInput(m,key,ph){var i=el('input',{cls:'t',type:'text',placeholder:ph,'aria-label':ph});i.value=m[key]||'';i.addEventListener('input',function(){m[key]=i.value;refresh()});return i}
+function medCard(m,ix,redraw){
+ var c=el('div',{cls:'med'});
+ c.appendChild(el('div',{cls:'medh'},[el('span',{cls:'idx',text:String(ix+1)}),medInput(m,'dci','DCI'),el('button',{cls:'del',type:'button','aria-label':'Supprimer la ligne '+(ix+1),text:'Suppr.',onclick:function(){MEDS.splice(ix,1);redraw()}})]));
+ c.appendChild(el('div',{cls:'row3'},[medInput(m,'forme','Forme'),medInput(m,'dos','Dosage')]));
+ var po=el('div',{cls:'poso'});['M','Mi','S','N'].forEach(function(n,i){var inp=el('input',{cls:'t',type:'text',inputmode:'decimal','aria-label':'Posologie '+n});inp.value=m.p[i];inp.addEventListener('input',function(){m.p[i]=inp.value;refresh()});po.appendChild(el('label',{},[inp,el('span',{text:n})]))});
+ c.appendChild(el('span',{cls:'sl',text:'Posologie (matin, midi, soir, nuit)'}));c.appendChild(po);
+ c.appendChild(el('span',{cls:'sl',text:'Sources'}));
+ var sg=el('div',{cls:'srcs'});var diffs=el('div',{cls:'diffs'});
+ var SYM={'':'',ok:'✓',abs:'✗',diff:'≠'};var NEXT={'':'ok',ok:'abs',abs:'diff',diff:''};
+ var LAB={'':'non consultée',ok:'confirme',abs:'absent',diff:'diffère'};
+ function drawDiffs(){diffs.innerHTML='';SRC.forEach(function(s){if(m.s[s]==='diff'){var i=el('input',{cls:'t',type:'text',placeholder:'ex. 1 cp/j','aria-label':'Valeur selon '+s});i.value=m.v[s]||'';i.addEventListener('input',function(){m.v[s]=i.value;refresh()});diffs.appendChild(el('div',{cls:'unit'},[el('span',{text:'Selon '+s+' :'}),i]))}})}
+ SRC.forEach(function(s){var b=el('button',{cls:'sc',type:'button'});function paint(){b.dataset.s=m.s[s];b.innerHTML='';b.appendChild(document.createTextNode(s+' '+SYM[m.s[s]]));b.appendChild(el('small',{text:LAB[m.s[s]]}));b.setAttribute('aria-label','Source '+s+' : '+LAB[m.s[s]])}paint();b.addEventListener('click',function(){m.s[s]=NEXT[m.s[s]];paint();drawDiffs();refresh()});sg.appendChild(b)});
+ c.appendChild(sg);drawDiffs();c.appendChild(diffs);
+ c.appendChild(el('span',{cls:'sl',text:'Statut'}));
+ var stb=el('div',{cls:'chips'});['OK','Discordance','À vérifier'].forEach(function(o){var b=el('button',{cls:'chip',type:'button',text:o,'aria-pressed':m.st===o?'true':'false'});b.addEventListener('click',function(){m.st=m.st===o?'':o;Array.prototype.forEach.call(stb.children,function(x){x.setAttribute('aria-pressed',x.textContent===m.st?'true':'false')});refresh()});stb.appendChild(b)});
+ c.appendChild(stb);c.appendChild(medInput(m,'rem','Remarque'));
+ return c;
+}
+var COUNTERS=[];
+function filled(v){return Array.isArray(v)?v.length>0:!!(v&&String(v).trim())}
+function render(){
+ var root=document.getElementById('form');root.innerHTML='';VIS=[];COUNTERS=[];CHIPP=[];DYN=[];ALBOX=[];
+ SECTIONS=isChir()?SEC_CHIR:SEC_MED;
+ var card=el('div',{cls:'svc'});card.appendChild(el('div',{cls:'svch',text:'Service (UF)'}));
+ [['Médecine · gériatrie · urgences',UF_MED],['Chirurgie thoracique / orthopédie',UF_CHIR]].forEach(function(g){
+  card.appendChild(el('div',{cls:'sl',text:g[0]}));var c=el('div',{cls:'chips'});
+  g[1].forEach(function(u){c.appendChild(el('button',{cls:'chip',type:'button',text:u,'aria-pressed':S.uf===u?'true':'false',onclick:function(){S.uf=S.uf===u?'':u;render()}}))});card.appendChild(c)});
+ root.appendChild(card);
+ if(!S.uf){root.appendChild(el('p',{cls:'note',text:'Choisissez l’UF : la feuille correspondante s’affiche ensuite.'}));document.getElementById('pt').value=S.nom||'';return}
+ root.appendChild(el('p',{cls:'feuille',text:isChir()?'Feuille : conciliation chirurgie thoracique / orthopédie':'Feuille : conciliation médecine (gériatrie, médecine interne, urgences)'}));
+ SECTIONS.forEach(function(sec,i){
+  var cnt=el('span',{cls:'cnt'});
+  var chev=document.createElementNS('http://www.w3.org/2000/svg','svg');chev.setAttribute('viewBox','0 0 24 24');chev.setAttribute('class','chev');chev.setAttribute('aria-hidden','true');chev.innerHTML='<path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
+  var d=el('details',{cls:'sec'},[el('summary',{},[el('span',{cls:'num',text:String(i+1)}),el('span',{cls:'st',text:sec.title}),cnt,chev])]);
+  if(i===0)d.open=true;
+  var body=el('div',{cls:'body'});sec.f.forEach(function(f){body.appendChild(field(f))});d.appendChild(body);root.appendChild(d);
+  COUNTERS.push({e:cnt,sec:sec});if(sec.show)VIS.push({e:d,fn:sec.show});
+ });
+ document.getElementById('pt').value=S.nom||'';
+ refresh();
+}
+function secCount(sec){
+ if(sec.id==='bil')return MEDS.filter(function(m){return filled(m.dci)}).length+' méd.';
+ var n=0;sec.f.forEach(function(f){if(skip(f))return;if(f.t==='src'){if(filled(S[f.k+'_ok'])||filled(S[f.k+'_c']))n++;return}if(filled(S[f.k]))n++});return n?n+' rempli'+(n>1?'s':''):'';
+}
+function drawAlerts(box){box.innerHTML='';var A=alerts();if(!A.length){box.appendChild(el('p',{cls:'sl',text:'Aucune alerte : elles apparaissent ici selon les cases cochées (pathologies, chutes, déglutition, tabac, alcool…).'}));return}
+ A.forEach(function(x){var d=el('div',{cls:'al '+x.lv},[el('b',{text:x.t+' : '}),document.createTextNode(x.d)]);if(x.link)d.appendChild(el('a',{href:x.link.href,target:'_blank',rel:'noopener',text:x.link.l}));box.appendChild(d)})}
+function refresh(){VIS.forEach(function(v){v.e.hidden=!v.fn()});CHIPP.forEach(function(p){p()});DYN.forEach(function(d){d.e.textContent=d.fn()});ALBOX.forEach(drawAlerts);COUNTERS.forEach(function(c){c.e.textContent=secCount(c.sec)})}
+document.getElementById('pt').addEventListener('input',function(e){S.nom=e.target.value;var f=document.querySelector('#form input[data-k="nom"]');if(f)f.value=S.nom;refresh()});
+
+function val(f){
+ var v=S[f.k];
+ if(f.t==='yn'){if(!v)return '';return v+(v==='Oui'&&filled(S[f.k+'_d'])?' ('+S[f.k+'_d'].trim()+')':'')}
+ if(Array.isArray(v))return v.join(', ');
+ if(!filled(v))return '';
+ if(f.t==='num'&&f.u)return String(v).trim()+' '+f.u;
+ if(f.t==='date'&&/^\d{4}-\d{2}-\d{2}$/.test(v))return v.split('-').reverse().join('/');
+ if(f.t==='area'&&f.k==='atcd')return '\n'+String(v).trim().split(/\n+/).map(function(x){return ' - '+x.trim()}).join('\n');
+ return String(v).trim();
+}
+function buildText(){
+ var L=['CONCILIATION MEDICAMENTEUSE','Patient : '+(S.nom||'?')];
+ SECTIONS.forEach(function(sec){
+  var out=[];
+  if(sec.show&&!sec.show())return;
+  if(sec.id==='bil'){
+   alerts().forEach(function(x){out.push('! '+x.t+' : '+x.d)});
+   MEDS.forEach(function(m,i){if(!filled(m.dci))return;
+    var srcs=SRC.map(function(s){var st=m.s[s];if(!st)return '';return s+':'+(st==='ok'?'ok':st==='abs'?'absent':(m.v[s]||'diff'))}).filter(Boolean).join(' ');
+    var pos=m.p.some(filled)?m.p.map(function(x){return x||'0'}).join('-'):'';
+    out.push((i+1)+'. '+[m.dci,m.forme,m.dos,pos].filter(filled).join(' ')+(srcs?' | '+srcs:'')+(m.st?' | '+m.st:'')+(filled(m.rem)?' | '+m.rem.trim():''));
+   });
+  } else sec.f.forEach(function(f){
+   if(skip(f))return;
+   if(f.show&&!f.show())return;
+   if(f.t==='src'){var o=S[f.k+'_ok'],c=noContact(S[f.k+'_c']);if(!filled(o)&&!filled(c))return;out.push(f.c+' '+f.l+' : '+(o||'?')+(o==='Non'&&filled(S[f.k+'_pq'])?' (pourquoi : '+S[f.k+'_pq'].trim()+')':'')+(filled(c)?' – '+c:''));return}
+   var v=val(f);if(v)out.push((f.sh||f.l||'Observance')+' : '+v);
+  });
+  if(out.length){L.push('');L.push('## '+sec.title.toUpperCase());L=L.concat(out)}
+ });
+ return L.join('\n');
+}
+function noContact(c){if(!filled(c))return '';return String(c).replace(/\S+@\S+/g,'').replace(/\+?\d[\d .\-\/]{6,}\d/g,'').replace(/(t[ée]l[ée]?(phone)?|mail)\s*:?/gi,'').replace(/[\s,;:–-]+$/,'').replace(/^[\s,;:–-]+/,'').trim()}
+function bytes(s){return new TextEncoder().encode(s).length}
+var LIMIT=1800;
+function split(text){
+ if(bytes(text)<=LIMIT)return [text];
+ var lines=text.split('\n'),parts=[],cur='';
+ lines.forEach(function(l){var nx=cur?cur+'\n'+l:l;if(bytes(nx)>LIMIT-40&&cur){parts.push(cur);cur=l}else cur=nx});
+ if(cur)parts.push(cur);
+ return parts.map(function(p,i){return '[Partie '+(i+1)+'/'+parts.length+' · Patient : '+(S.nom||'?')+']\n'+p});
+}
+var PARTS=[],PI=0,MODE='text';
+function drawQR(){
+ var box=document.getElementById('qr');box.innerHTML='';
+ var txt=PARTS[PI];document.getElementById('qrtxt').textContent=txt;
+ try{
+  qrcode.stringToBytes=qrcode.stringToBytesFuncs['UTF-8'];
+  var q=qrcode(0,'L');q.addData(txt,'Byte');q.make();
+  box.innerHTML=q.createSvgTag({cellSize:4,margin:2,scalable:true});
+ }catch(e){box.appendChild(el('p',{cls:'meta',text:'Le QR code n\u2019a pas pu être généré ('+(e&&e.message||e)+').'}))}
+ document.getElementById('pager').hidden=PARTS.length<2;
+ document.getElementById('pnum').textContent='QR '+(PI+1)+' / '+PARTS.length;
+ document.getElementById('qrmeta').textContent=MODE==='link'?'Scannez ce QR code : il ouvre les feuilles A4 remplies, à télécharger en PDF ('+bytes(txt)+' caractères, données dans le lien uniquement).':PARTS.length>1?'La fiche est longue : elle tient sur '+PARTS.length+' QR codes à scanner dans l\u2019ordre.':'Toute la fiche tient dans ce QR code ('+bytes(txt)+' octets).';
+}
+document.getElementById('gen').addEventListener('click',function(){
+ if(!filled(S.nom)){document.getElementById('pt').focus();document.getElementById('pt').setAttribute('placeholder','à remplir d\u2019abord');return}
+ if(typeof qrcode==='undefined'){alert('Le générateur de QR code ne s\u2019est pas chargé. Vérifiez la connexion puis rechargez la page.');return}
+ pack(payload()).then(function(d){var u=BASE+'#f='+d;PARTS=bytes(u)<=2300?[u]:split(buildText());MODE=PARTS[0]===u?'link':'text';PI=0;drawQR();document.getElementById('modal').classList.add('on');document.getElementById('close').focus()});return;document.getElementById('modal').classList.add('on');document.getElementById('close').focus();
+});
+document.getElementById('close').addEventListener('click',function(){document.getElementById('modal').classList.remove('on')});
+document.getElementById('prev').addEventListener('click',function(){if(PI>0){PI--;drawQR()}});
+document.getElementById('next').addEventListener('click',function(){if(PI<PARTS.length-1){PI++;drawQR()}});
+var armT=null;var clr=document.getElementById('clear');
+clr.addEventListener('click',function(){
+ if(!clr.classList.contains('arm')){clr.classList.add('arm');clr.textContent='Confirmer';armT=setTimeout(function(){clr.classList.remove('arm');clr.textContent='Effacer'},3000);return}
+ clearTimeout(armT);clr.classList.remove('arm');clr.textContent='Effacer';S={};MEDS=[];render();window.scrollTo(0,0);
+});
+document.getElementById('demo').addEventListener('click',function(){
+ var isChirDemo=isChir();
+ S={date:'2026-10-06',par:'Externe DFASP2',h1:'09:10',h2:'09:40',incl:'> 65 ans + urgences + domicile',nom:'TES/MA',iep:'000000',ddn:'1944-05-02',chambre:'214',age:'82',sexe:'F',uf:'2134',entree:'2026-10-05',vie:'Domicile + aidant',all:'Aucune connue',
+  sD_ok:'Obtenue',sP_ok:'Obtenue',sA1_ok:'Obtenue',sA1_c:'Fille',sA2_ok:'Non',sO_ok:'Obtenue',sO_c:'Pharmacie du quartier',sM1_ok:'Obtenue',
+  gere:'Famille',pil:'Oui',ix_src:['RCP (base publique)','Thériaque'],ix_res:'Aucune interaction relevée',vsrc:['Patient'],v_dtp:'Ne sait pas',v_gr:'Fait',v_gr_y:'2025',v_co:'Fait',v_co_y:'2024, 4 doses',v_pn:'Non fait',v_zo:'Non fait',v_vrs:'Non fait',vsuite:['Rattrapage à signaler au médecin','Patient informé'],freq:'Non',modif:'Non',anti:'Non',ipp:'Oui',ipp_d:'Oméprazole 20 mg',ippi:'Inconnue',inh:'Oui',inh_d:'Salbutamol',ho:'Oui',ho_d:'Paracétamol',
+  o1:'0',o2:'2',o2q:'Metformine du soir',o4:'Le paracétamol',poids:'58',creat:'95',dfg:'48',form:'CKD-EPI',motif:'Chute à domicile',atcd:'HTA\nDiabète de type 2\nAsthme',
+  chute:'Oui',nch:'2',qch:['Aucune'],trb:['Vision','Constipation'],tab:'Non',alc:'Non',deg:'Non',mod:['Aucun'],qinh:'Non',patho:['IRC'],p_irc:'G3a (45–59)'};
+ MEDS=[
+  {dci:'Amlodipine',forme:'cp',dos:'5 mg',p:['1','0','0','0'],s:{D:'ok',P:'ok',A:'',O:'ok',M:'ok'},v:{},st:'OK',rem:''},
+  {dci:'Metformine',forme:'cp',dos:'1000 mg',p:['1','0','1','0'],s:{D:'ok',P:'diff',A:'abs',O:'ok',M:'ok'},v:{P:'1 cp/j'},st:'Discordance',rem:'oublie le soir ?'},
+  {dci:'Paracétamol',forme:'cp',dos:'1 g',p:['','','',''],s:{D:'',P:'ok',A:'',O:'',M:''},v:{},st:'À vérifier',rem:'automédication'},
+  {dci:'Oméprazole',forme:'gél',dos:'20 mg',p:['1','0','0','0'],s:{D:'ok',P:'ok',A:'',O:'ok',M:''},v:{},st:'OK',rem:'indication à préciser'}];
+ if(isChirDemo){S=Object.assign(S,{uf:'5890',nom:'TES/JE',iep:'000000',ddn:'1952-03-14',age:'74',chambre:'12B',telp:'',incl:'',vie:'',pili:'',obsr:'Non observant',o2:'Oui',
+  epi:'Non',alc:'Non',tab:'Sevrage envisagé',tabc:'substituts',subn:'Oui',subn_d:'Patch nicotine 14 mg',stu:'Non',patho:['IRC'],p_irc:'G3b (30–44)',irs:'Non',diab:'Type 2',acho:'2',trb:['Constipation'],modc:'Non',motif:'Prothèse totale de hanche programmée',atcd:'HTA\nDiabète de type 2\nTabagisme'})}
+ render();
+});
+
+var BASE=(/^https?:$/.test(location.protocol)&&!/claude|anthropic|usercontent/.test(location.hostname))?location.origin+location.pathname:'https://claude.ai/artifact/HEWsDwWbefVkbaYUHZgcp5';
+function payload(){var o={};for(var k in S){var v=S[k];if(!filled(v))continue;o[k]=v}
+ var m=MEDS.filter(function(x){return filled(x.dci)}).map(function(x){return [x.dci,x.forme,x.dos,x.p,SRC.map(function(s){return x.s[s]==='diff'?'='+(x.v[s]||''):x.s[s]}),x.st,x.rem,x.met||'']});
+ return {v:1,s:o,m:m}}
+function fromPayload(p){S=p.s||{};MEDS=(p.m||[]).map(function(a){var m=newMed();m.dci=a[0]||'';m.forme=a[1]||'';m.dos=a[2]||'';m.p=a[3]||['','','',''];(a[4]||[]).forEach(function(v,i){var s=SRC[i];if(v&&v.charAt(0)==='='){m.s[s]='diff';m.v[s]=v.slice(1)}else m.s[s]=v||''});m.st=a[5]||'';m.rem=a[6]||'';m.met=a[7]||'';return m})}
+function b64u(u8){var s='';for(var i=0;i<u8.length;i++)s+=String.fromCharCode(u8[i]);return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+function unb64u(t){t=t.replace(/-/g,'+').replace(/_/g,'/');while(t.length%4)t+='=';var s=atob(t),u=new Uint8Array(s.length);for(var i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u}
+async function pipe(u8,stream){var r=new Response(new Blob([u8]).stream().pipeThrough(stream));return new Uint8Array(await r.arrayBuffer())}
+async function pack(obj){var u=new TextEncoder().encode(JSON.stringify(obj));if(window.CompressionStream){return 'z'+b64u(await pipe(u,new CompressionStream('deflate')))}return 'j'+b64u(u)}
+async function unpack(t){var u=unb64u(t.slice(1));if(t.charAt(0)==='z')u=await pipe(u,new DecompressionStream('deflate'));return JSON.parse(new TextDecoder().decode(u))}
+
+function E(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e}
+function box(on){var b=E('span','bx'+(on?' on':''),on?'✓':'');return b}
+function opt(label,on){var o=E('span','opt');o.appendChild(box(on));o.appendChild(document.createTextNode(label));return o}
+function dline(v){return E('span','dl ink',v||'')}
+function fmt(f,v){if(!filled(v))return '';if(f.t==='date'&&/^\d{4}-\d{2}-\d{2}$/.test(v))return v.split('-').reverse().join('/');return String(v).trim()+(f.u?' '+f.u:'')}
+function pItem(f){
+ var it=E('div','it');
+ if(f.l)it.appendChild(E('span','lb',f.l+(f.t==='one'||f.t==='many'||f.t==='yn'?'':' :')));
+ if(f.t==='one'||f.t==='many'){var v=S[f.k];f.o.forEach(function(o){it.appendChild(opt(o,f.t==='many'?(v||[]).indexOf(o)>=0:v===o))});if(f.o.join('').length>26||f.l.length>40)it.classList.add('full')}
+ else if(f.t==='yn'){YN.forEach(function(o){it.appendChild(opt(o,S[f.k]===o))});if(f.d){it.appendChild(E('span','',f.d.toLowerCase()+' :'));it.appendChild(dline(S[f.k+'_d']));it.classList.add('full')}}
+ else if(f.t==='area'){it.classList.add('full');var a=E('div','area ink',f.k==='atcd'?(S[f.k]||'').split(/\n+/).filter(Boolean).map(function(x){return '– '+x.trim()}).join('\n'):(S[f.k]||''));if(f.big)a.style.minHeight='96px';it.appendChild(a)}
+ else{it.appendChild(dline(fmt(f,S[f.k])));if(!f.half)it.classList.add('full')}
+ return it}
+function pSection(sec){
+ var frag=document.createDocumentFragment();frag.appendChild(E('div','abar',sec.title));
+ if(sec.id==='src'){var t=E('table');var h=E('tr');['Code','Source','Nom · téléphone · mail','Obtenue'].forEach(function(x){h.appendChild(E('th','',x))});t.appendChild(h);
+  sec.f.forEach(function(f){if(f.t!=='src')return;var r=E('tr');var c=E('td','c');c.appendChild(E('span','code',f.c));r.appendChild(c);r.appendChild(E('td','',f.l));r.appendChild(E('td','ink',S[f.k+'_c']||''));var o=E('td');o.appendChild(opt('oui',S[f.k+'_ok']==='Obtenue'));o.appendChild(opt('non',S[f.k+'_ok']==='Non'));if(S[f.k+'_ok']==='Non'&&filled(S[f.k+'_pq']))o.appendChild(E('span','ink',' : '+S[f.k+'_pq'].trim()));r.appendChild(o);t.appendChild(r)});
+  frag.appendChild(t);return frag}
+ var bx=E('div','abox');sec.f.forEach(function(f){if(skip(f))return;bx.appendChild(pItem(f))});frag.appendChild(bx);return frag}
+function pPage(land,sub){var p=E('div','a4'+(land?' land':''));var hd=E('div','hd');var t=E('div');t.appendChild(E('h1','',land?'Bilan médicamenteux : recueil par source':title()));t.appendChild(E('div','sub',sub));hd.appendChild(t);var pn=E('div','ptn','Patient : ');pn.appendChild(E('span','ink',S.nom||''));hd.appendChild(pn);p.appendChild(hd);return p}
+function bilanPage(){
+ var p=pPage(true,'Une ligne par médicament · ✓ confirme · ✗ absent · valeur = diffère · vide = non consultée');
+ var A=alerts();if(A.length){var ab=E('div','aal');A.forEach(function(x){var d=E('div','al '+x.lv);d.appendChild(E('b','',x.t+' : '));d.appendChild(document.createTextNode(x.d+(x.link?' Liste OMéDIT Normandie / SFPC.':'')));ab.appendChild(d)});p.appendChild(ab)}
+ var t=E('table');var h1=E('tr');['#','DCI','Forme','Dosage','M','Mi','S','N'].concat(SRC).concat(['Statut','Remarque']).forEach(function(x,i){var th=E('th',(i>=4&&i<=12)?'c':'');if(SRC.indexOf(x)>=0&&i>7){th.appendChild(E('span','code',x))}else th.textContent=x;h1.appendChild(th)});t.appendChild(h1);
+ var ms=MEDS.filter(function(m){return filled(m.dci)});var n=Math.max(15,ms.length);
+ for(var i=0;i<n;i++){var m=ms[i];var r=E('tr');r.style.height='31px';r.appendChild(E('td','c',String(i+1)));
+  if(m){[m.dci,m.forme,m.dos].forEach(function(x){r.appendChild(E('td','ink',x||''))});m.p.forEach(function(x){r.appendChild(E('td','c ink',x||''))});
+   SRC.forEach(function(s){var st=m.s[s];r.appendChild(E('td','c ink'+(st==='diff'?' df':''),st==='ok'?'✓':st==='abs'?'✗':st==='diff'?(m.v[s]||'≠'):''))});
+   r.appendChild(E('td','ink',m.st||''));r.appendChild(E('td','ink',m.rem||''))}
+  else for(var j=0;j<14;j++)r.appendChild(E('td'));
+  t.appendChild(r)}
+ p.appendChild(t);return p}
+function over(pg){var last=pg.lastElementChild;return last.getBoundingClientRect().bottom-pg.getBoundingClientRect().top>pg.clientHeight-28-24}
+function buildPages(){
+ var host=document.getElementById('print');host.innerHTML='';var pages=[];
+ var cur=pPage(false,'Recueil d\u2019informations');host.appendChild(cur);pages.push(cur);
+ SECTIONS.forEach(function(sec){if(sec.id==='bil'||sec.id==='inh'||sec.id==='ix'||sec.id==='rev')return;
+  var frag=pSection(sec);var nodes=Array.prototype.slice.call(frag.childNodes);cur.appendChild(frag);
+  if(over(cur)){nodes.forEach(function(n){cur.removeChild(n)});cur=pPage(false,'Recueil d\u2019informations (suite)');host.appendChild(cur);pages.push(cur);nodes.forEach(function(n){cur.appendChild(n)})}});
+ var bp=bilanPage();host.appendChild(bp);pages.push(bp);
+ var tb=bp.querySelector('table');while(over(bp)&&tb.rows.length>2){var lr=tb.rows[tb.rows.length-1];if(lr.cells[1]&&lr.cells[1].textContent)break;tb.deleteRow(-1)}
+ var ixs=SECTIONS.filter(function(x){return x.id==='ix'})[0];if(ixs){var xp=pPage(false,'Analyse des interactions · avis du relecteur');xp.appendChild(pSection(ixs));xp.appendChild(pSection(REV_SEC));host.appendChild(xp);pages.push(xp)}
+ var inh=SECTIONS.filter(function(x){return x.id==='inh'})[0];
+ if(inh&&(!inh.show||inh.show())){var ip=pPage(false,'Questionnaire inhalateurs · d\u2019après la fiche de [Dr NOM], docteure junior');ip.querySelector('h1').textContent='Observance et bon usage des traitements inhalés';ip.appendChild(pSection(inh));host.appendChild(ip);pages.push(ip)}
+ var today=new Date().toLocaleDateString('fr-FR');
+ pages.forEach(function(p,i){['tl','tr','bl','br'].forEach(function(c){p.appendChild(E('span','mk '+c))});
+  var hd=p.querySelector('.hd');var g=E('div','qrid');g.appendChild(E('div','qt','Page '+(i+1)+'/'+pages.length+'\nv1'));g.firstChild.style.whiteSpace='pre';
+  try{qrcode.stringToBytes=qrcode.stringToBytesFuncs['UTF-8'];var q=qrcode(0,'M');q.addData('Fiche conciliation médicamenteuse – page '+(i+1)+'/'+pages.length+' – version 1 – patient : '+(S.nom||'?'),'Byte');q.make();var w=E('div');w.innerHTML=q.createSvgTag({cellSize:2,margin:0,scalable:true});g.appendChild(w.firstChild)}catch(e){}
+  var pn=hd.querySelector('.ptn');var grp=E('div');grp.style.cssText='display:flex;align-items:center;gap:12px';hd.replaceChild(grp,pn);grp.appendChild(pn);grp.appendChild(g);
+  var f=E('div','afoot');f.appendChild(E('span','','Généré le '+today+' · document confidentiel : données de santé'));f.appendChild(E('span','',(i+1)+' / '+pages.length));p.appendChild(f)});
+ return pages}
+function showReader(msg){
+ var pages=buildPages();var P=document.getElementById('paper');P.innerHTML='';
+ var W=Math.min(P.clientWidth||window.innerWidth-20,794);
+ pages.forEach(function(pg){var c=pg.cloneNode(true);var w=pg.classList.contains('land')?1123:794,h=pg.classList.contains('land')?794:1123;var sc=Math.min(1,(Math.min(document.documentElement.clientWidth-20,794))/w);var wr=E('div','pw');wr.style.width=(w*sc)+'px';wr.style.height=(h*sc)+'px';c.style.transform='scale('+sc+')';wr.appendChild(c);P.appendChild(wr)});
+ document.getElementById('rmeta').textContent=msg||'';document.getElementById('pdfmsg').textContent='';
+ document.getElementById('reader').classList.add('on');document.getElementById('reader').scrollTo(0,0);
+}
+async function makePdf(){
+ var J=window.jspdf&&window.jspdf.jsPDF;if(!J||!window.html2canvas)throw new Error('outils PDF non chargés');
+ var pages=Array.prototype.slice.call(document.getElementById('print').children);var doc=null;
+ for(var i=0;i<pages.length;i++){var land=pages[i].classList.contains('land');
+  var cv=await html2canvas(pages[i],{scale:2,backgroundColor:'#ffffff',logging:false});
+  var o=land?'landscape':'portrait';if(!doc)doc=new J({orientation:o,unit:'pt',format:'a4'});else doc.addPage('a4',o);
+  var W=land?841.89:595.28,H=land?595.28:841.89;doc.addImage(cv.toDataURL('image/jpeg',0.92),'JPEG',0,0,W,H)}
+ return doc.output('blob');
+}
+document.getElementById('pdf').addEventListener('click',async function(){
+ var b=this,msg=document.getElementById('pdfmsg');b.disabled=true;b.textContent='Création du PDF…';msg.textContent='';
+ try{var blob=await makePdf();var name='Conciliation_'+(S.date||new Date().toISOString().slice(0,10))+'.pdf';
+  var dl=window.claude&&window.claude.use?await window.claude.use('downloads'):null;
+  if(dl){try{await dl.save({filename:name,data:blob});msg.textContent='PDF prêt : vous pouvez l\u2019imprimer ou l\u2019archiver.'}catch(e){msg.textContent=e&&e.code==='declined'?'Téléchargement annulé.':'Le téléchargement n\u2019est pas disponible ici.'}}
+  else{var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();msg.textContent='PDF téléchargé.'}
+ }catch(e){msg.textContent='Le PDF n\u2019a pas pu être créé ('+(e&&e.message||e)+').'}
+ b.disabled=false;b.textContent='Télécharger le PDF';
+});
+document.getElementById('redit').addEventListener('click',function(){document.getElementById('reader').classList.remove('on')});
+document.getElementById('preview').addEventListener('click',function(){showReader('Aperçu de la fiche')});
+(async function(){var h=location.hash||'';var i=h.indexOf('f=');if(i<0)return;
+ try{fromPayload(await unpack(decodeURIComponent(h.slice(i+2))));render();showReader('Fiche reçue par QR code. Fermer pour la modifier.')}
+ catch(e){alert('Cette fiche n\u2019a pas pu être lue.')}})();
+
+function openVac(){var a=filled(S.age)?S.age+' ans':'non renseigné';var d=filled(S.ddn)?' · né(e) le '+S.ddn.split('-').reverse().join('/'):'';
+ document.getElementById('vage').textContent='Âge du patient : '+a+d;document.getElementById('vacm').classList.add('on');document.getElementById('vacx').focus()}
+document.getElementById('vacx').addEventListener('click',function(){document.getElementById('vacm').classList.remove('on')});
+render();
+</script>
+<div class="print" id="print" aria-hidden="true"></div>
+</body>
+</html>
