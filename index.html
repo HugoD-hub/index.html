@@ -293,7 +293,8 @@ var SEC_MED=[
  {t:'date',k:'entree',l:"Date d'entrée",half:1},{t:'text',k:'chambre',l:'Chambre',half:1},
  {t:'one',k:'vie',l:'Lieu de vie',o:['Domicile seul','Domicile + aidant','Famille','EHPAD']},
  {t:'one',k:'all',l:'Allergies',o:['Aucune connue','Oui'],alert:1},
- {t:'text',k:'allq',l:'Lesquelles',show:show('all','Oui'),alert:1}
+ {t:'text',k:'allq',l:'Lesquelles',show:show('all','Oui'),alert:1},
+ {t:'one',k:'aut_dm',sh:'Autorise la consultation du dossier médical',l:'Le patient autorise-t-il la consultation de son dossier médical ?',o:['Oui','Non','Non évaluable']}
 ]},
 {id:'src',title:"Sources d'information",f:[
  {t:'hint',l:'Les codes D, P, A, O, M sont les colonnes du bilan. Objectif HAS : au moins 3 sources.'},
@@ -397,7 +398,8 @@ var SEC_CHIR=[
  {t:'date',k:'entree',l:"Date d'entrée",half:1},{t:'text',k:'chambre',l:'Chambre',half:1},
  {t:'text',k:'telp',l:'Téléphone du patient'},
  {t:'one',k:'all',l:'Allergies',o:['Aucune connue','Oui'],alert:1},
- {t:'text',k:'allq',l:'Lesquelles',show:show('all','Oui'),alert:1}
+ {t:'text',k:'allq',l:'Lesquelles',show:show('all','Oui'),alert:1},
+ {t:'one',k:'aut_dm',sh:'Autorise la consultation du dossier médical',l:'Le patient autorise-t-il la consultation de son dossier médical ?',o:['Oui','Non','Non évaluable']}
 ]},
 SEC_MED[1],
 {id:'ges',title:'Médicaments prescrits',f:[
@@ -599,7 +601,7 @@ function val(f){
  return String(v).trim();
 }
 function buildText(){
- var L=['CONCILIATION MEDICAMENTEUSE','Patient : '+(S.nom||'?')];
+ var L=['CONCILIATION MEDICAMENTEUSE','Patient : '+(S.nom||'?'),'UF : '+(S.uf||'?')];
  SECTIONS.forEach(function(sec){
   var out=[];
   if(sec.show&&!sec.show())return;
@@ -702,7 +704,7 @@ function pSection(sec){
  if(sec.id==='src'){var t=E('table');var h=E('tr');['Code','Source','Nom · téléphone · mail','Obtenue'].forEach(function(x){h.appendChild(E('th','',x))});t.appendChild(h);
   sec.f.forEach(function(f){if(f.t!=='src')return;var r=E('tr');var c=E('td','c');c.appendChild(E('span','code',f.c));r.appendChild(c);r.appendChild(E('td','',f.l));r.appendChild(E('td','ink',S[f.k+'_c']||''));var o=E('td');o.appendChild(opt('oui',S[f.k+'_ok']==='Obtenue'));o.appendChild(opt('non',S[f.k+'_ok']==='Non'));if(S[f.k+'_ok']==='Non'&&filled(S[f.k+'_pq']))o.appendChild(E('span','ink',' : '+S[f.k+'_pq'].trim()));r.appendChild(o);t.appendChild(r)});
   frag.appendChild(t);return frag}
- var bx=E('div','abox');sec.f.forEach(function(f){if(skip(f))return;bx.appendChild(pItem(f))});frag.appendChild(bx);return frag}
+ var bx=E('div','abox');if(sec.id==='rec'){var u=pItem({t:'one',k:'uf',l:'UF',o:isChir()?UF_CHIR:UF_MED});u.classList.add('full');bx.appendChild(u)}sec.f.forEach(function(f){if(skip(f))return;bx.appendChild(pItem(f))});frag.appendChild(bx);return frag}
 function pPage(land,sub){var p=E('div','a4'+(land?' land':''));var hd=E('div','hd');var t=E('div');t.appendChild(E('h1','',land?'Bilan médicamenteux : recueil par source':title()));t.appendChild(E('div','sub',sub));hd.appendChild(t);var pn=E('div','ptn','Patient : ');pn.appendChild(E('span','ink',S.nom||''));hd.appendChild(pn);p.appendChild(hd);return p}
 function bilanPage(){
  var p=pPage(true,'Une ligne par médicament · ✓ confirme · ✗ absent · valeur = diffère · vide = non consultée');
