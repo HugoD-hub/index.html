@@ -96,7 +96,7 @@ input.t:focus,textarea.t:focus{outline:2px solid var(--acc);outline-offset:1px}
 .modal.on{display:flex}
 .sheet{background:var(--card);width:100%;max-width:560px;max-height:100%;overflow:auto;border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:12px}
 .sheet h2{margin:0;font-size:19px}
-.qr{background:#fff;border-radius:10px;padding:10px;align-self:center;width:min(100%,340px)}
+.qr{background:#fff;border-radius:10px;padding:8px;align-self:center;width:min(100%,520px)}
 .qr svg,.qr img{width:100%;height:auto;display:block}
 .pager{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .meta{font-size:13px;color:var(--mut)}
@@ -496,7 +496,11 @@ function alerts(){
 var NOF={hint:1,vbtn:1,links:1,lnk:1,dfgref:1,alerts:1,meds:1};function skip(f){return !!NOF[f.t]}
 
 function el(tag,attrs,kids){var e=document.createElement(tag);if(attrs)for(var a in attrs){if(a==='text')e.textContent=attrs[a];else if(a==='cls')e.className=attrs[a];else if(a.slice(0,2)==='on')e.addEventListener(a.slice(2),attrs[a]);else e.setAttribute(a,attrs[a])}(kids||[]).forEach(function(k){if(k)e.appendChild(k)});return e}
-function input(k,type,ph){var i=el('input',{cls:'t',type:type||'text',placeholder:ph||'','aria-label':ph||k,'data-k':k});i.value=S[k]||'';i.addEventListener('input',function(){S[k]=i.value;if(k==='nom')document.getElementById('pt').value=i.value;refresh()});return i}
+function isoFr(v){return (typeof v==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(v))?v.split('-').reverse().join('/'):v}
+function mask(v,kind){var d=String(v).replace(/\D/g,'');if(kind==='date'){d=d.slice(0,8);return d.length>4?d.slice(0,2)+'/'+d.slice(2,4)+'/'+d.slice(4):d.length>2?d.slice(0,2)+'/'+d.slice(2):d}d=d.slice(0,4);return d.length>2?d.slice(0,2)+':'+d.slice(2):d}
+function input(k,type,ph){var kind=(type==='date'||type==='time')?type:null;if(kind){if(S[k])S[k]=isoFr(S[k]);ph=(ph?ph+' ':'')+(kind==='date'?'(JJ/MM/AAAA)':'(hh:mm)')}
+ var i=el('input',{cls:'t',type:'text',placeholder:kind?(kind==='date'?'JJ/MM/AAAA':'hh:mm'):(ph||''),'aria-label':ph||k,'data-k':k});if(kind){i.setAttribute('inputmode','numeric');i.setAttribute('maxlength',kind==='date'?'10':'5')}
+ i.value=S[k]||'';i.addEventListener('input',function(){if(kind){var m=mask(i.value,kind);if(m!==i.value)i.value=m}S[k]=i.value;if(k==='nom')document.getElementById('pt').value=i.value;refresh()});return i}
 var CHIPP=[],DYN=[],ALBOX=[];
 function onSet(k){}
 function chips(k,opts,multi){var box=el('div',{cls:'chips'});function paint(){Array.prototype.forEach.call(box.children,function(c){var t=c.textContent;c.setAttribute('aria-pressed',(multi?(S[k]||[]).indexOf(t)>=0:S[k]===t)?'true':'false')})}opts.forEach(function(o){var b=el('button',{cls:'chip',type:'button',text:o});b.addEventListener('click',function(){if(multi){var a=(S[k]||[]).slice();var i=a.indexOf(o);if(i>=0)a.splice(i,1);else a.push(o);S[k]=a}else{S[k]=S[k]===o?'':o}onSet(k);refresh()});box.appendChild(b)});paint();CHIPP.push(paint);return box}
@@ -587,7 +591,8 @@ function secCount(sec){
 }
 function drawAlerts(box){box.innerHTML='';var A=alerts();if(!A.length){box.appendChild(el('p',{cls:'sl',text:'Aucune alerte : elles apparaissent ici selon les cases cochées (pathologies, chutes, déglutition, tabac, alcool…).'}));return}
  A.forEach(function(x){var d=el('div',{cls:'al '+x.lv},[el('b',{text:x.t+' : '}),document.createTextNode(x.d)]);if(x.link)d.appendChild(el('a',{href:x.link.href,target:'_blank',rel:'noopener',text:x.link.l}));box.appendChild(d)})}
-function refresh(){VIS.forEach(function(v){v.e.hidden=!v.fn()});CHIPP.forEach(function(p){p()});DYN.forEach(function(d){d.e.textContent=d.fn()});ALBOX.forEach(drawAlerts);COUNTERS.forEach(function(c){c.e.textContent=secCount(c.sec)})}
+function noSpell(){document.querySelectorAll('input,textarea').forEach(function(x){if(!x.hasAttribute('spellcheck')){x.setAttribute('spellcheck','false');x.setAttribute('autocorrect','off');x.setAttribute('autocomplete','off')}})}
+function refresh(){noSpell();VIS.forEach(function(v){v.e.hidden=!v.fn()});CHIPP.forEach(function(p){p()});DYN.forEach(function(d){d.e.textContent=d.fn()});ALBOX.forEach(drawAlerts);COUNTERS.forEach(function(c){c.e.textContent=secCount(c.sec)})}
 document.getElementById('pt').addEventListener('input',function(e){S.nom=e.target.value;var f=document.querySelector('#form input[data-k="nom"]');if(f)f.value=S.nom;refresh()});
 
 function val(f){
@@ -596,7 +601,7 @@ function val(f){
  if(Array.isArray(v))return v.join(', ');
  if(!filled(v))return '';
  if(f.t==='num'&&f.u)return String(v).trim()+' '+f.u;
- if(f.t==='date'&&/^\d{4}-\d{2}-\d{2}$/.test(v))return v.split('-').reverse().join('/');
+ if(f.t==='date')return isoFr(String(v).trim());
  if(f.t==='area'&&f.k==='atcd')return '\n'+String(v).trim().split(/\n+/).map(function(x){return ' - '+x.trim()}).join('\n');
  return String(v).trim();
 }
@@ -648,7 +653,7 @@ function drawQR(){
 document.getElementById('gen').addEventListener('click',function(){
  if(!filled(S.nom)){document.getElementById('pt').focus();document.getElementById('pt').setAttribute('placeholder','à remplir d\u2019abord');return}
  if(typeof qrcode==='undefined'){alert('Le générateur de QR code ne s\u2019est pas chargé. Vérifiez la connexion puis rechargez la page.');return}
- pack(payload()).then(function(d){var u=BASE+'#f='+d;PARTS=bytes(u)<=2300?[u]:split(buildText());MODE=PARTS[0]===u?'link':'text';PI=0;drawQR();document.getElementById('modal').classList.add('on');document.getElementById('close').focus()});return;document.getElementById('modal').classList.add('on');document.getElementById('close').focus();
+ pack(payload()).then(function(d){var u=BASE+'#f='+d;PARTS=bytes(u)<=2900?[u]:split(buildText());MODE=PARTS[0]===u?'link':'text';PI=0;drawQR();document.getElementById('modal').classList.add('on');document.getElementById('close').focus()});return;document.getElementById('modal').classList.add('on');document.getElementById('close').focus();
 });
 document.getElementById('close').addEventListener('click',function(){document.getElementById('modal').classList.remove('on')});
 document.getElementById('prev').addEventListener('click',function(){if(PI>0){PI--;drawQR()}});
@@ -660,17 +665,45 @@ clr.addEventListener('click',function(){
 });
 document.getElementById('demo').addEventListener('click',function(){
  var isChirDemo=isChir();
- S={date:'2026-10-06',par:'Externe DFASP2',h1:'09:10',h2:'09:40',incl:'> 65 ans + urgences + domicile',nom:'TES/MA',iep:'000000',ddn:'1944-05-02',chambre:'214',age:'82',sexe:'F',uf:'2134',entree:'2026-10-05',vie:'Domicile + aidant',all:'Aucune connue',
+ S={date:'06/10/2026',par:'Externe DFASP2',h1:'09:10',h2:'09:40',incl:'> 65 ans + urgences + domicile',nom:'TES/MA',iep:'000000',ddn:'02/05/1944',chambre:'214',age:'82',sexe:'F',uf:'2134',entree:'05/10/2026',vie:'Domicile + aidant',all:'Aucune connue',
   sD_ok:'Obtenue',sP_ok:'Obtenue',sA1_ok:'Obtenue',sA1_c:'Fille',sA2_ok:'Non',sO_ok:'Obtenue',sO_c:'Pharmacie du quartier',sM1_ok:'Obtenue',
   gere:'Famille',pil:'Oui',ix_src:['RCP (base publique)','Thériaque'],ix_res:'Aucune interaction relevée',vsrc:['Patient'],v_dtp:'Ne sait pas',v_gr:'Fait',v_gr_y:'2025',v_co:'Fait',v_co_y:'2024, 4 doses',v_pn:'Non fait',v_zo:'Non fait',v_vrs:'Non fait',vsuite:['Rattrapage à signaler au médecin','Patient informé'],freq:'Non',modif:'Non',anti:'Non',ipp:'Oui',ipp_d:'Oméprazole 20 mg',ippi:'Inconnue',inh:'Oui',inh_d:'Salbutamol',ho:'Oui',ho_d:'Paracétamol',
   o1:'0',o2:'2',o2q:'Metformine du soir',o4:'Le paracétamol',poids:'58',creat:'95',dfg:'48',form:'CKD-EPI',motif:'Chute à domicile',atcd:'HTA\nDiabète de type 2\nAsthme',
   chute:'Oui',nch:'2',qch:['Aucune'],trb:['Vision','Constipation'],tab:'Non',alc:'Non',deg:'Non',mod:['Aucun'],qinh:'Non',patho:['IRC'],p_irc:'G3a (45–59)'};
  MEDS=[
-  {dci:'Amlodipine',forme:'cp',dos:'5 mg',p:['1','0','0','0'],s:{D:'ok',P:'ok',A:'',O:'ok',M:'ok'},v:{},st:'OK',rem:''},
-  {dci:'Metformine',forme:'cp',dos:'1000 mg',p:['1','0','1','0'],s:{D:'ok',P:'diff',A:'abs',O:'ok',M:'ok'},v:{P:'1 cp/j'},st:'Discordance',rem:'oublie le soir ?'},
-  {dci:'Paracétamol',forme:'cp',dos:'1 g',p:['','','',''],s:{D:'',P:'ok',A:'',O:'',M:''},v:{},st:'À vérifier',rem:'automédication'},
-  {dci:'Oméprazole',forme:'gél',dos:'20 mg',p:['1','0','0','0'],s:{D:'ok',P:'ok',A:'',O:'ok',M:''},v:{},st:'OK',rem:'indication à préciser'}];
- if(isChirDemo){S=Object.assign(S,{uf:'5890',nom:'TES/JE',iep:'000000',ddn:'1952-03-14',age:'74',chambre:'12B',telp:'',incl:'',vie:'',pili:'',obsr:'Non observant',o2:'Oui',
+  {dci:'Amlodipine',forme:'cp',dos:'5 mg',p:['1','0','0','0'],s:{D:'ok',P:'ok',A:'',O:'ok',M:'ok'},v:{},st:'OK',rem:'HTA'},
+  {dci:'Ramipril',forme:'cp',dos:'5 mg',p:['1','0','0','0'],s:{D:'ok',P:'ok',A:'',O:'ok',M:'ok'},v:{},st:'OK',rem:'HTA, surveiller kaliémie'},
+  {dci:'Bisoprolol',forme:'cp',dos:'2,5 mg',p:['1','0','0','0'],s:{D:'ok',P:'ok',A:'',O:'ok',M:''},v:{},st:'OK',rem:''},
+  {dci:'Furosémide',forme:'cp',dos:'40 mg',p:['1','0','0','0'],s:{D:'ok',P:'diff',A:'',O:'ok',M:'ok'},v:{P:'oublie parfois'},st:'Discordance',rem:'patiente dit le prendre « quand elle sort pas »'},
+  {dci:'Atorvastatine',forme:'cp',dos:'20 mg',p:['0','0','1','0'],s:{D:'ok',P:'ok',A:'',O:'ok',M:'ok'},v:{},st:'OK',rem:''},
+  {dci:'Apixaban',forme:'cp',dos:'2,5 mg',p:['1','0','1','0'],s:{D:'ok',P:'ok',A:'',O:'ok',M:'ok'},v:{},st:'OK',rem:'dose réduite : âge + créat, à recontrôler'},
+  {dci:'Metformine',forme:'cp',dos:'1000 mg',p:['1','0','1','0'],s:{D:'ok',P:'diff',A:'',O:'ok',M:'ok'},v:{P:'1 cp/j'},st:'Discordance',rem:'oublie le soir ; DFG 48'},
+  {dci:'Sitagliptine',forme:'cp',dos:'50 mg',p:['1','0','0','0'],s:{D:'ok',P:'',A:'',O:'ok',M:''},v:{},st:'À vérifier',rem:'pas retrouvée par le médecin traitant'},
+  {dci:'Insuline glargine',forme:'sol inj',dos:'14 UI',p:['0','0','0','1'],s:{D:'ok',P:'ok',A:'ok',O:'ok',M:''},v:{},st:'OK',rem:'IDE à domicile, glycémies notées'},
+  {dci:'Lévothyroxine',forme:'cp',dos:'75 µg',p:['1','0','0','0'],s:{D:'ok',P:'ok',A:'',O:'ok',M:'ok'},v:{},st:'OK',rem:'à jeun'},
+  {dci:'Oméprazole',forme:'gél',dos:'20 mg',p:['1','0','0','0'],s:{D:'ok',P:'ok',A:'',O:'ok',M:''},v:{},st:'À vérifier',rem:'indication à préciser (fiche HAS)'},
+  {dci:'Paracétamol',forme:'cp',dos:'1 g',p:['0','0','0','0'],s:{D:'',P:'ok',A:'',O:'',M:''},v:{},st:'À vérifier',rem:'automédication, jusqu’à 3 g/j'},
+  {dci:'Tramadol',forme:'cp LP',dos:'50 mg',p:['1','0','1','0'],s:{D:'ok',P:'abs',A:'',O:'ok',M:''},v:{},st:'Discordance',rem:'patiente dit l’avoir arrêté'},
+  {dci:'Prégabaline',forme:'gél',dos:'25 mg',p:['1','0','1','0'],s:{D:'ok',P:'',A:'',O:'ok',M:'ok'},v:{},st:'OK',rem:'douleurs neuropathiques'},
+  {dci:'Sertraline',forme:'cp',dos:'50 mg',p:['1','0','0','0'],s:{D:'ok',P:'ok',A:'',O:'ok',M:'ok'},v:{},st:'OK',rem:''},
+  {dci:'Mirtazapine',forme:'cp',dos:'15 mg',p:['0','0','0','1'],s:{D:'ok',P:'',A:'',O:'ok',M:''},v:{},st:'OK',rem:'sommeil'},
+  {dci:'Zopiclone',forme:'cp',dos:'3,75 mg',p:['0','0','0','1'],s:{D:'abs',P:'ok',A:'',O:'ok',M:''},v:{},st:'Discordance',rem:'non retrouvé dans Axigate'},
+  {dci:'Donépézil',forme:'cp',dos:'5 mg',p:['0','0','0','1'],s:{D:'ok',P:'',A:'',O:'ok',M:'ok'},v:{},st:'OK',rem:''},
+  {dci:'Tamsulosine',forme:'gél LP',dos:'0,4 mg',p:['0','0','1','0'],s:{D:'ok',P:'',A:'',O:'ok',M:''},v:{},st:'À vérifier',rem:'sexe F : vérifier indication / erreur ?'},
+  {dci:'Solifénacine',forme:'cp',dos:'5 mg',p:['1','0','0','0'],s:{D:'ok',P:'',A:'',O:'ok',M:''},v:{},st:'OK',rem:'risque de chute'},
+  {dci:'Calcium vitamine D3',forme:'cp à croquer',dos:'500 mg/400 UI',p:['1','0','1','0'],s:{D:'ok',P:'ok',A:'',O:'ok',M:''},v:{},st:'OK',rem:''},
+  {dci:'Alendronate',forme:'cp',dos:'70 mg',p:['1','0','0','0'],s:{D:'ok',P:'',A:'',O:'ok',M:''},v:{},st:'OK',rem:'1/semaine le lundi, à jeun'},
+  {dci:'Salbutamol',forme:'inh',dos:'100 µg',p:['0','0','0','0'],s:{D:'ok',P:'ok',A:'',O:'ok',M:''},v:{},st:'OK',rem:'si besoin, 2 bouffées'},
+  {dci:'Fluticasone salmétérol',forme:'inh',dos:'250/50 µg',p:['1','0','1','0'],s:{D:'ok',P:'ok',A:'',O:'ok',M:''},v:{},st:'OK',rem:'technique à revoir'},
+  {dci:'Latanoprost',forme:'collyre',dos:'0,005 %',p:['0','0','0','1'],s:{D:'',P:'ok',A:'',O:'ok',M:''},v:{},st:'OK',rem:'œil droit'},
+  {dci:'Macrogol',forme:'sachet',dos:'10 g',p:['1','0','0','0'],s:{D:'',P:'ok',A:'',O:'ok',M:''},v:{},st:'OK',rem:''},
+  {dci:'Fer sulfate',forme:'cp',dos:'80 mg',p:['1','0','0','0'],s:{D:'ok',P:'abs',A:'',O:'ok',M:''},v:{},st:'Discordance',rem:'arrêté par la patiente (constipation)'},
+  {dci:'Cyanocobalamine',forme:'amp buv',dos:'1000 µg',p:['0','0','0','0'],s:{D:'ok',P:'',A:'',O:'ok',M:''},v:{},st:'OK',rem:'1/mois'},
+  {dci:'Kétoprofène gel',forme:'gel',dos:'2,5 %',p:['1','0','1','0'],s:{D:'',P:'ok',A:'',O:'',M:''},v:{},st:'À vérifier',rem:'automédication : AINS topique'},
+  {dci:'Fentanyl patch',forme:'patch',dos:'12 µg/h',p:['0','0','0','0'],s:{D:'ok',P:'',A:'',O:'ok',M:'ok'},v:{},st:'OK',rem:'tous les 3 jours'},
+  {dci:'Lorazépam',forme:'cp',dos:'1 mg',p:['0','0','0','1'],s:{D:'abs',P:'ok',A:'',O:'',M:''},v:{},st:'À vérifier',rem:'donné par la fille, non prescrit ?'},
+  {dci:'Millepertuis',forme:'gél',dos:'300 mg',p:['1','0','0','0'],s:{D:'',P:'ok',A:'',O:'',M:''},v:{},st:'À vérifier',rem:'phytothérapie : interactions à rechercher'}];
+ if(isChirDemo){S=Object.assign(S,{uf:'5890',nom:'TES/JE',iep:'000000',ddn:'14/03/1952',age:'74',chambre:'12B',telp:'',incl:'',vie:'',pili:'',obsr:'Non observant',o2:'Oui',
   epi:'Non',alc:'Non',tab:'Sevrage envisagé',tabc:'substituts',subn:'Oui',subn_d:'Patch nicotine 14 mg',stu:'Non',patho:['IRC'],p_irc:'G3b (30–44)',irs:'Non',diab:'Type 2',acho:'2',trb:['Constipation'],modc:'Non',motif:'Prothèse totale de hanche programmée',atcd:'HTA\nDiabète de type 2\nTabagisme'})}
  render();
 });
@@ -690,7 +723,7 @@ function E(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls
 function box(on){var b=E('span','bx'+(on?' on':''),on?'✓':'');return b}
 function opt(label,on){var o=E('span','opt');o.appendChild(box(on));o.appendChild(document.createTextNode(label));return o}
 function dline(v){return E('span','dl ink',v||'')}
-function fmt(f,v){if(!filled(v))return '';if(f.t==='date'&&/^\d{4}-\d{2}-\d{2}$/.test(v))return v.split('-').reverse().join('/');return String(v).trim()+(f.u?' '+f.u:'')}
+function fmt(f,v){if(!filled(v))return '';if(f.t==='date')return isoFr(String(v).trim());return String(v).trim()+(f.u?' '+f.u:'')}
 function pItem(f){
  var it=E('div','it');
  if(f.l)it.appendChild(E('span','lb',f.l+(f.t==='one'||f.t==='many'||f.t==='yn'?'':' :')));
@@ -706,18 +739,23 @@ function pSection(sec){
   frag.appendChild(t);return frag}
  var bx=E('div','abox');if(sec.id==='rec'){var u=pItem({t:'one',k:'uf',l:'UF',o:isChir()?UF_CHIR:UF_MED});u.classList.add('full');bx.appendChild(u)}sec.f.forEach(function(f){if(skip(f))return;bx.appendChild(pItem(f))});frag.appendChild(bx);return frag}
 function pPage(land,sub){var p=E('div','a4'+(land?' land':''));var hd=E('div','hd');var t=E('div');t.appendChild(E('h1','',land?'Bilan médicamenteux : recueil par source':title()));t.appendChild(E('div','sub',sub));hd.appendChild(t);var pn=E('div','ptn','Patient : ');pn.appendChild(E('span','ink',S.nom||''));hd.appendChild(pn);p.appendChild(hd);return p}
-function bilanPage(){
- var p=pPage(true,'Une ligne par médicament · ✓ confirme · ✗ absent · valeur = diffère · vide = non consultée');
- var A=alerts();if(A.length){var ab=E('div','aal');A.forEach(function(x){var d=E('div','al '+x.lv);d.appendChild(E('b','',x.t+' : '));d.appendChild(document.createTextNode(x.d+(x.link?' Liste OMéDIT Normandie / SFPC.':'')));ab.appendChild(d)});p.appendChild(ab)}
- var t=E('table');var h1=E('tr');['#','DCI','Forme','Dosage','M','Mi','S','N'].concat(SRC).concat(['Statut','Remarque']).forEach(function(x,i){var th=E('th',(i>=4&&i<=12)?'c':'');if(SRC.indexOf(x)>=0&&i>7){th.appendChild(E('span','code',x))}else th.textContent=x;h1.appendChild(th)});t.appendChild(h1);
- var ms=MEDS.filter(function(m){return filled(m.dci)});var n=Math.max(15,ms.length);
- for(var i=0;i<n;i++){var m=ms[i];var r=E('tr');r.style.height='31px';r.appendChild(E('td','c',String(i+1)));
-  if(m){[m.dci,m.forme,m.dos].forEach(function(x){r.appendChild(E('td','ink',x||''))});m.p.forEach(function(x){r.appendChild(E('td','c ink',x||''))});
-   SRC.forEach(function(s){var st=m.s[s];r.appendChild(E('td','c ink'+(st==='diff'?' df':''),st==='ok'?'✓':st==='abs'?'✗':st==='diff'?(m.v[s]||'≠'):''))});
-   r.appendChild(E('td','ink',m.st||''));r.appendChild(E('td','ink',m.rem||''))}
-  else for(var j=0;j<14;j++)r.appendChild(E('td'));
-  t.appendChild(r)}
- p.appendChild(t);return p}
+function bilanRow(t,num,m){var r=E('tr');r.style.height='31px';r.appendChild(E('td','c',String(num)));
+ if(m){[m.dci,m.forme,m.dos].forEach(function(x){r.appendChild(E('td','ink',x||''))});m.p.forEach(function(x){r.appendChild(E('td','c ink',x||''))});
+  SRC.forEach(function(s){var st=m.s[s];r.appendChild(E('td','c ink'+(st==='diff'?' df':''),st==='ok'?'✓':st==='abs'?'✗':st==='diff'?(m.v[s]||'≠'):''))});
+  r.appendChild(E('td','ink',m.st||''));r.appendChild(E('td','ink',m.rem||''))}
+ else for(var j=0;j<14;j++)r.appendChild(E('td'));
+ t.appendChild(r);return r}
+function bilanPages(host,pages){
+ var leg='Une ligne par médicament · ✓ confirme · ✗ absent · valeur = diffère · vide = non consultée';
+ function newPage(first){var p=pPage(true,first?leg:'Suite du bilan · '+leg);
+  if(first){var A=alerts();if(A.length){var ab=E('div','aal');A.forEach(function(x){var d=E('div','al '+x.lv);d.appendChild(E('b','',x.t+' : '));d.appendChild(document.createTextNode(x.d+(x.link?' Liste OMéDIT Normandie / SFPC.':'')));ab.appendChild(d)});p.appendChild(ab)}}
+  var t=E('table');var h1=E('tr');['#','DCI','Forme','Dosage','M','Mi','S','N'].concat(SRC).concat(['Statut','Remarque']).forEach(function(x,i){var th=E('th',(i>=4&&i<=12)?'c':'');if(SRC.indexOf(x)>=0&&i>7){th.appendChild(E('span','code',x))}else th.textContent=x;h1.appendChild(th)});t.appendChild(h1);
+  p.appendChild(t);host.appendChild(p);pages.push(p);return t}
+ var ms=MEDS.filter(function(m){return filled(m.dci)});
+ var t=newPage(true),num=0;
+ ms.forEach(function(m){num++;var r=bilanRow(t,num,m);if(over(t.parentNode)&&t.rows.length>2){t.deleteRow(-1);t=newPage(false);bilanRow(t,num,m)}});
+ for(var k=0;k<60;k++){var r=bilanRow(t,num+1,null);if(over(t.parentNode)){t.deleteRow(-1);break}num++}
+}
 function over(pg){var last=pg.lastElementChild;return last.getBoundingClientRect().bottom-pg.getBoundingClientRect().top>pg.clientHeight-28-24}
 function buildPages(){
  var host=document.getElementById('print');host.innerHTML='';var pages=[];
@@ -725,8 +763,7 @@ function buildPages(){
  SECTIONS.forEach(function(sec){if(sec.id==='bil'||sec.id==='inh'||sec.id==='ix'||sec.id==='rev')return;
   var frag=pSection(sec);var nodes=Array.prototype.slice.call(frag.childNodes);cur.appendChild(frag);
   if(over(cur)){nodes.forEach(function(n){cur.removeChild(n)});cur=pPage(false,'Recueil d\u2019informations (suite)');host.appendChild(cur);pages.push(cur);nodes.forEach(function(n){cur.appendChild(n)})}});
- var bp=bilanPage();host.appendChild(bp);pages.push(bp);
- var tb=bp.querySelector('table');while(over(bp)&&tb.rows.length>2){var lr=tb.rows[tb.rows.length-1];if(lr.cells[1]&&lr.cells[1].textContent)break;tb.deleteRow(-1)}
+ bilanPages(host,pages);
  var ixs=SECTIONS.filter(function(x){return x.id==='ix'})[0];if(ixs){var xp=pPage(false,'Analyse des interactions · avis du relecteur');xp.appendChild(pSection(ixs));xp.appendChild(pSection(REV_SEC));host.appendChild(xp);pages.push(xp)}
  var inh=SECTIONS.filter(function(x){return x.id==='inh'})[0];
  if(inh&&(!inh.show||inh.show())){var ip=pPage(false,'Questionnaire inhalateurs · d\u2019après la fiche de [Dr NOM], docteure junior');ip.querySelector('h1').textContent='Observance et bon usage des traitements inhalés';ip.appendChild(pSection(inh));host.appendChild(ip);pages.push(ip)}
@@ -755,7 +792,7 @@ async function makePdf(){
 }
 document.getElementById('pdf').addEventListener('click',async function(){
  var b=this,msg=document.getElementById('pdfmsg');b.disabled=true;b.textContent='Création du PDF…';msg.textContent='';
- try{var blob=await makePdf();var name='Conciliation_'+(S.date||new Date().toISOString().slice(0,10))+'.pdf';
+ try{var blob=await makePdf();var name='Conciliation_'+(filled(S.date)?isoFr(S.date).replace(/\//g,'-'):new Date().toLocaleDateString('fr-FR').replace(/\//g,'-'))+'.pdf';
   var dl=window.claude&&window.claude.use?await window.claude.use('downloads'):null;
   if(dl){try{await dl.save({filename:name,data:blob});msg.textContent='PDF prêt : vous pouvez l\u2019imprimer ou l\u2019archiver.'}catch(e){msg.textContent=e&&e.code==='declined'?'Téléchargement annulé.':'Le téléchargement n\u2019est pas disponible ici.'}}
   else{var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();msg.textContent='PDF téléchargé.'}
@@ -768,7 +805,7 @@ document.getElementById('preview').addEventListener('click',function(){showReade
  try{fromPayload(await unpack(decodeURIComponent(h.slice(i+2))));render();showReader('Fiche reçue par QR code. Fermer pour la modifier.')}
  catch(e){alert('Cette fiche n\u2019a pas pu être lue.')}})();
 
-function openVac(){var a=filled(S.age)?S.age+' ans':'non renseigné';var d=filled(S.ddn)?' · né(e) le '+S.ddn.split('-').reverse().join('/'):'';
+function openVac(){var a=filled(S.age)?S.age+' ans':'non renseigné';var d=filled(S.ddn)?' · né(e) le '+isoFr(S.ddn):'';
  document.getElementById('vage').textContent='Âge du patient : '+a+d;document.getElementById('vacm').classList.add('on');document.getElementById('vacx').focus()}
 document.getElementById('vacx').addEventListener('click',function(){document.getElementById('vacm').classList.remove('on')});
 render();
