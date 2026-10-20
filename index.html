@@ -156,6 +156,8 @@ pre.txt{white-space:pre-wrap;font-family:inherit;font-size:13px;background:var(-
 .a4 .qrid svg{width:58px;height:58px;display:block}
 .a4 .afoot{margin-top:auto;display:flex;justify-content:space-between;font-size:10.5px;color:#4A4F57}
 .svc{background:var(--card);border:2px solid var(--acc);border-radius:12px;padding:12px 14px;margin-bottom:10px;display:flex;flex-direction:column;gap:8px}
+.pts .chip[aria-pressed="true"]{font-weight:700}
+.addp{border-style:dashed !important;color:var(--acc)}
 .svch{font-weight:700;color:var(--acc)}
 .feuille{margin:0 0 10px;font-size:14px;font-weight:600;color:var(--acc)}
 .vbtn{grid-column:1 / -1;display:flex;flex-direction:column;gap:6px}
@@ -190,12 +192,12 @@ pre.txt{white-space:pre-wrap;font-family:inherit;font-size:13px;background:var(-
   <div class="pt"><label for="pt">Patient</label><input id="pt" autocomplete="off" placeholder="Initiales (ex. DUP/MA)"></div>
   <button class="ghost" id="demo" type="button">Exemple</button>
 </header>
-<p class="note"><b>Maquette de démonstration.</b> N'entrez pas de données réelles. Rien n'est enregistré, tout disparaît en fermant la page.</p>
+<p class="note"><b>Maquette de démonstration.</b> N'entrez pas de données réelles. Plusieurs patients possibles : gardés si vous actualisez la page, effacés en fermant l'onglet (ou au bout de 12 h).</p>
 <div id="form"></div>
 </div>
 
 <div class="bar"><div class="in">
-  <button class="danger" id="clear" type="button">Effacer</button>
+  <button class="danger" id="clear" type="button">Effacer ce patient</button>
   <button class="primary" id="gen" type="button">Générer le QR code</button>
 </div></div>
 
@@ -248,7 +250,7 @@ var VAC_SEC={id:'vac',title:'Vaccination',f:[{t:'vbtn'},
  {t:'many',k:'vsrc',sh:'Statut vérifié avec',l:'Statut vérifié avec',o:['Patient','Carnet de vaccination','Officine','Médecin traitant']}]
  .concat(vrow('v_dtp','dTcaP (diphtérie, tétanos, polio, coqueluche)'),vrow('v_gr','Grippe (saison en cours)'),vrow('v_co','COVID-19','Année de la dernière dose, nombre de doses'),vrow('v_pn','Pneumocoque'),vrow('v_zo','Zona'),vrow('v_vrs','VRS'))
  .concat([{t:'text',k:'v_aut',l:'Autres vaccins'},
- {t:'many',k:'vsuite',sh:'Suite donnée',l:'Suite donnée',o:['Rattrapage à signaler au médecin','Patient informé','Patient refuse','Rien à proposer']},
+ {t:'many',k:'vsuite',sh:'Suite donnée',l:'Suite donnée',o:['Rattrapage à signaler au médecin','Tracer dans le CRH','Patient informé','Patient refuse','Rien à proposer']},
  {t:'one',k:'v_acc',sh:'Accepte une intervention vaccinale',l:'Accepte une intervention vaccinale ?',o:YN},
  {t:'text',k:'v_accq',sh:'Vaccin(s) accepté(s)',l:'Laquelle / lesquelles',show:show('v_acc','Oui')},
  {t:'text',k:'vcom',l:'Commentaire vaccination'}])};
@@ -293,8 +295,11 @@ var SEC_MED=[
  {t:'date',k:'entree',l:"Date d'entrée",half:1},{t:'text',k:'chambre',l:'Chambre',half:1},
  {t:'one',k:'vie',l:'Lieu de vie',o:['Domicile seul','Domicile + aidant','Famille','EHPAD']},
  {t:'one',k:'all',l:'Allergies',o:['Aucune connue','Oui'],alert:1},
- {t:'text',k:'allq',l:'Lesquelles',show:show('all','Oui'),alert:1},
- {t:'one',k:'aut_dm',sh:'Autorise la consultation du dossier médical',l:'Le patient autorise-t-il la consultation de son dossier médical ?',o:['Oui','Non','Non évaluable']}
+ {t:'many',k:'allc',sh:'Allergies',l:'Allergies fréquentes',o:['AAC','Pénicilline','Iode'],show:show('all','Oui'),alert:1},
+ {t:'text',k:'allq',sh:'Autres allergies',l:'Autres allergies',show:show('all','Oui'),alert:1},
+ {t:'one',k:'aut_dm',sh:'Autorise la consultation du dossier médical',l:'Le patient autorise-t-il la consultation de son dossier médical ?',o:['Oui','Non','Non évaluable']},
+ {t:'many',k:'ent_diff',sh:'Difficultés pour l\u2019entretien',l:'Difficultés pour l\u2019entretien',o:['Troubles cognitifs','Barrière de la langue','Autre']},
+ {t:'text',k:'ent_aut',sh:'Autre difficulté',l:'Autre difficulté',show:show('ent_diff','Autre')}
 ]},
 {id:'src',title:"Sources d'information",f:[
  {t:'hint',l:'Les codes D, P, A, O, M sont les colonnes du bilan. Objectif HAS : au moins 3 sources.'},
@@ -312,7 +317,8 @@ var SEC_MED=[
 {id:'ges',title:'Médicaments prescrits et gestion',f:[
  {t:'one',k:'gere',sh:'Qui gère',l:'Qui gère les traitements ?',o:['Patient','IDEL','Famille']},
  {t:'one',k:'pil',l:'Pilulier',o:YN,half:1},{t:'one',k:'pili',sh:'Souhaite un pilulier',l:'Si non, souhaite un pilulier ?',o:YN,half:1,show:show('pil','Non')},
- {t:'yn',k:'freq',sh:'Fréquence particulière',l:'Fréquence particulière (1/sem, 1/mois)',d:'Lequel'},
+ {t:'one',k:'freq',sh:'Fréquence particulière',l:'Fréquence particulière (1/sem, 1/mois)',o:YN},
+ {t:'many',k:'freqc',sh:'Fréquence particulière : médicaments',l:'Médicaments concernés',o:['Vitamine D','Méthotrexate','Bisphosphonate'],show:show('freq','Oui')},{t:'text',k:'freq_d',sh:'Fréquence particulière : autre',l:'Autre médicament',show:show('freq','Oui')},
  {t:'text',k:'tol',l:"Tolérance aux traitements d'entrée"},
  {t:'yn',k:'modif',l:'Modification ou arrêt récent',d:'Pourquoi'},
  {t:'yn',k:'anti',l:'Anti-infectieux récent',d:'Lequel'} 
@@ -321,7 +327,7 @@ COM_SEC,
 VAC_SEC,
 {id:'gal',title:'Formes galéniques et automédication',f:[
  {t:'hint',l:'Chaque « oui » devient une ligne du bilan.'},
- {t:'yn',k:'ipp',l:'IPP',d:'Lequel'},{t:'lnk',href:HAS_IPP,l:'Vérifier l\u2019indication : bon usage des IPP (HAS 2022)',show:show('ipp','Oui')},{t:'text',k:'ippi',l:'Indication de l\u2019IPP',show:show('ipp','Oui')},
+ {t:'yn',k:'ipp',l:'IPP',d:'Lequel'},{t:'lnk',href:HAS_IPP,l:'Vérifier l\u2019indication : bon usage des IPP (HAS 2022)',show:show('ipp','Oui')},{t:'many',k:'ippc',sh:'Indication de l\u2019IPP',l:'Indication de l\u2019IPP',o:['RGO','Co-prescription','Antécédent d\u2019ulcère','Sans indication','Autre indication'],show:show('ipp','Oui')},{t:'text',k:'ippi',sh:'Autre indication de l\u2019IPP',l:'Autre indication',show:function(){return S.ipp==='Oui'&&(S.ippc||[]).indexOf('Autre indication')>=0}},
  {t:'yn',k:'col',l:'Collyre',d:'Lequel'},{t:'one',k:'col_eye',sh:'Collyre : œil',l:'Œil',o:['Deux yeux','Œil gauche','Œil droit'],show:show('col','Oui')},
  {t:'yn',k:'inh',l:'Inhalateur',d:'Lequel'},{t:'one',k:'qinh',sh:'Questionnaire inhalateur',l:'Questionnaire observance inhalateur réalisé ?',o:YN,show:show('inh','Oui')},
  {t:'yn',k:'ins',l:'Instillation nez, oreille',d:'Lequel'},{t:'yn',k:'pat',l:'Patch, crème, pommade',d:'Lequel'},
@@ -343,7 +349,8 @@ VAC_SEC,
  {t:'num',k:'creat',l:'Créatinine',u:'µmol/L',half:1},{t:'num',k:'dfg',sh:'DFG',l:'DFG (mL/min/1,73 m²)',half:1},
  {t:'one',k:'form',l:'Formule du DFG',o:['EKFC','CKD-EPI','Autre']},
  {t:'area',k:'motif',l:"Motif d'hospitalisation"},
- {t:'area',k:'atcd',sh:'Antécédents',l:'Antécédents (un par ligne)',big:1}
+ {t:'area',k:'atcd',sh:'Antécédents',l:'Antécédents (un par ligne)',big:1},
+ {t:'many',k:'atcdc',sh:'Antécédents (1 clic)',l:'Antécédents fréquents',o:['Fibrillation auriculaire','Néoplasie']}
 ].concat(PATHO_F)},
 {id:'que',title:'Questions',f:[
  {t:'one',k:'chute',l:'Antécédents de chutes',o:YN},
@@ -398,14 +405,18 @@ var SEC_CHIR=[
  {t:'date',k:'entree',l:"Date d'entrée",half:1},{t:'text',k:'chambre',l:'Chambre',half:1},
  {t:'text',k:'telp',l:'Téléphone du patient'},
  {t:'one',k:'all',l:'Allergies',o:['Aucune connue','Oui'],alert:1},
- {t:'text',k:'allq',l:'Lesquelles',show:show('all','Oui'),alert:1},
- {t:'one',k:'aut_dm',sh:'Autorise la consultation du dossier médical',l:'Le patient autorise-t-il la consultation de son dossier médical ?',o:['Oui','Non','Non évaluable']}
+ {t:'many',k:'allc',sh:'Allergies',l:'Allergies fréquentes',o:['AAC','Pénicilline','Iode'],show:show('all','Oui'),alert:1},
+ {t:'text',k:'allq',sh:'Autres allergies',l:'Autres allergies',show:show('all','Oui'),alert:1},
+ {t:'one',k:'aut_dm',sh:'Autorise la consultation du dossier médical',l:'Le patient autorise-t-il la consultation de son dossier médical ?',o:['Oui','Non','Non évaluable']},
+ {t:'many',k:'ent_diff',sh:'Difficultés pour l\u2019entretien',l:'Difficultés pour l\u2019entretien',o:['Troubles cognitifs','Barrière de la langue','Autre']},
+ {t:'text',k:'ent_aut',sh:'Autre difficulté',l:'Autre difficulté',show:show('ent_diff','Autre')}
 ]},
 SEC_MED[1],
 {id:'ges',title:'Médicaments prescrits',f:[
  {t:'one',k:'gere',l:'Qui gère les traitements ?',o:['Patient','IDEL','Famille']},
  {t:'one',k:'pil',l:'Pilulier',o:YN,half:1},{t:'one',k:'pili',sh:'Souhaite un pilulier',l:'Si non, souhaite un pilulier ?',o:YN,half:1,show:show('pil','Non')},
- {t:'yn',k:'freq',sh:'Fréquence particulière',l:'Fréquence particulière (1/semaine, 1/mois)',d:'Lequel'},
+ {t:'one',k:'freq',sh:'Fréquence particulière',l:'Fréquence particulière (1/semaine, 1/mois)',o:YN},
+ {t:'many',k:'freqc',sh:'Fréquence particulière : médicaments',l:'Médicaments concernés',o:['Vitamine D','Méthotrexate','Bisphosphonate'],show:show('freq','Oui')},{t:'text',k:'freq_d',sh:'Fréquence particulière : autre',l:'Autre médicament',show:show('freq','Oui')},
  {t:'text',k:'tol',l:"Tolérance aux traitements d'entrée"},
  {t:'yn',k:'modif',l:'Modification ou arrêt récent',d:'Pourquoi'},
  {t:'yn',k:'anti',l:'Anti-infectieux récent',d:'Lequel'}
@@ -414,7 +425,7 @@ COM_SEC,
 VAC_SEC,
 {id:'gal',title:'Formes galéniques et automédication',f:[
  {t:'hint',l:'Chaque « oui » devient une ligne du bilan.'},
- {t:'yn',k:'ipp',l:'IPP',d:'Lequel'},{t:'lnk',href:HAS_IPP,l:'Vérifier l\u2019indication : bon usage des IPP (HAS 2022)',show:show('ipp','Oui')},{t:'text',k:'ippi',l:'Indication de l\u2019IPP',show:show('ipp','Oui')},
+ {t:'yn',k:'ipp',l:'IPP',d:'Lequel'},{t:'lnk',href:HAS_IPP,l:'Vérifier l\u2019indication : bon usage des IPP (HAS 2022)',show:show('ipp','Oui')},{t:'many',k:'ippc',sh:'Indication de l\u2019IPP',l:'Indication de l\u2019IPP',o:['RGO','Co-prescription','Antécédent d\u2019ulcère','Sans indication','Autre indication'],show:show('ipp','Oui')},{t:'text',k:'ippi',sh:'Autre indication de l\u2019IPP',l:'Autre indication',show:function(){return S.ipp==='Oui'&&(S.ippc||[]).indexOf('Autre indication')>=0}},
  {t:'yn',k:'col',l:'Collyre',d:'Lequel'},{t:'one',k:'col_eye',sh:'Collyre : œil',l:'Œil',o:['Deux yeux','Œil gauche','Œil droit'],show:show('col','Oui')},
  {t:'yn',k:'ins',l:'Instillation nez, oreille',d:'Lequel'},
  {t:'yn',k:'inh',l:'Inhalateur',d:'Lequel'},{t:'yn',k:'pat',l:'Patch, crème, pommade',d:'Lequel'},
@@ -437,7 +448,8 @@ VAC_SEC,
  {t:'num',k:'creat',l:'Créatinine',u:'µmol/L',half:1},{t:'num',k:'dfg',sh:'DFG',l:'DFG (mL/min/1,73 m²)',half:1},
  {t:'one',k:'form',l:'Formule du DFG',o:['EKFC','CKD-EPI','Autre']},
  {t:'area',k:'motif',l:"Motif d'hospitalisation"},
- {t:'area',k:'atcd',sh:'Antécédents',l:'Antécédents : FR et comorbidités (un par ligne)',big:1}
+ {t:'area',k:'atcd',sh:'Antécédents',l:'Antécédents : FR et comorbidités (un par ligne)',big:1},
+ {t:'many',k:'atcdc',sh:'Antécédents (1 clic)',l:'Antécédents fréquents',o:['Fibrillation auriculaire','Néoplasie']}
 ].concat(PATHO_F)},
 {id:'que',title:'Questions',f:[
  {t:'one',k:'chute',l:'Antécédents de chutes',o:YN},
@@ -567,6 +579,7 @@ function filled(v){return Array.isArray(v)?v.length>0:!!(v&&String(v).trim())}
 function render(){
  var root=document.getElementById('form');root.innerHTML='';VIS=[];COUNTERS=[];CHIPP=[];DYN=[];ALBOX=[];
  SECTIONS=isChir()?SEC_CHIR:SEC_MED;
+ if(typeof saveFiche==='function')saveFiche();BARBOX=el('div',{cls:'svc pts'});root.appendChild(BARBOX);drawBar();
  var card=el('div',{cls:'svc'});card.appendChild(el('div',{cls:'svch',text:'Service (UF)'}));
  [['Médecine · gériatrie · urgences',UF_MED],['Chirurgie thoracique / orthopédie',UF_CHIR]].forEach(function(g){
   card.appendChild(el('div',{cls:'sl',text:g[0]}));var c=el('div',{cls:'chips'});
@@ -592,7 +605,7 @@ function secCount(sec){
 function drawAlerts(box){box.innerHTML='';var A=alerts();if(!A.length){box.appendChild(el('p',{cls:'sl',text:'Aucune alerte : elles apparaissent ici selon les cases cochées (pathologies, chutes, déglutition, tabac, alcool…).'}));return}
  A.forEach(function(x){var d=el('div',{cls:'al '+x.lv},[el('b',{text:x.t+' : '}),document.createTextNode(x.d)]);if(x.link)d.appendChild(el('a',{href:x.link.href,target:'_blank',rel:'noopener',text:x.link.l}));box.appendChild(d)})}
 function noSpell(){document.querySelectorAll('input,textarea').forEach(function(x){if(!x.hasAttribute('spellcheck')){x.setAttribute('spellcheck','false');x.setAttribute('autocorrect','off');x.setAttribute('autocomplete','off')}})}
-function refresh(){noSpell();VIS.forEach(function(v){v.e.hidden=!v.fn()});CHIPP.forEach(function(p){p()});DYN.forEach(function(d){d.e.textContent=d.fn()});ALBOX.forEach(drawAlerts);COUNTERS.forEach(function(c){c.e.textContent=secCount(c.sec)})}
+function refresh(){noSpell();saveFiche();drawBar();VIS.forEach(function(v){v.e.hidden=!v.fn()});CHIPP.forEach(function(p){p()});DYN.forEach(function(d){d.e.textContent=d.fn()});ALBOX.forEach(drawAlerts);COUNTERS.forEach(function(c){c.e.textContent=secCount(c.sec)})}
 document.getElementById('pt').addEventListener('input',function(e){S.nom=e.target.value;var f=document.querySelector('#form input[data-k="nom"]');if(f)f.value=S.nom;refresh()});
 
 function val(f){
@@ -660,14 +673,14 @@ document.getElementById('prev').addEventListener('click',function(){if(PI>0){PI-
 document.getElementById('next').addEventListener('click',function(){if(PI<PARTS.length-1){PI++;drawQR()}});
 var armT=null;var clr=document.getElementById('clear');
 clr.addEventListener('click',function(){
- if(!clr.classList.contains('arm')){clr.classList.add('arm');clr.textContent='Confirmer';armT=setTimeout(function(){clr.classList.remove('arm');clr.textContent='Effacer'},3000);return}
- clearTimeout(armT);clr.classList.remove('arm');clr.textContent='Effacer';S={};MEDS=[];render();window.scrollTo(0,0);
+ if(!clr.classList.contains('arm')){clr.classList.add('arm');clr.textContent='Confirmer';armT=setTimeout(function(){clr.classList.remove('arm');clr.textContent='Effacer ce patient'},3000);return}
+ clearTimeout(armT);clr.classList.remove('arm');clr.textContent='Effacer ce patient';deleteCur();
 });
 document.getElementById('demo').addEventListener('click',function(){
  var isChirDemo=isChir();
  S={date:'06/10/2026',par:'Externe DFASP2',h1:'09:10',h2:'09:40',incl:'> 65 ans + urgences + domicile',nom:'TES/MA',iep:'000000',ddn:'02/05/1944',chambre:'214',age:'82',sexe:'F',uf:'2134',entree:'05/10/2026',vie:'Domicile + aidant',all:'Aucune connue',
   sD_ok:'Obtenue',sP_ok:'Obtenue',sA1_ok:'Obtenue',sA1_c:'Fille',sA2_ok:'Non',sO_ok:'Obtenue',sO_c:'Pharmacie du quartier',sM1_ok:'Obtenue',
-  gere:'Famille',pil:'Oui',ix_src:['RCP (base publique)','Thériaque'],ix_res:'Aucune interaction relevée',vsrc:['Patient'],v_dtp:'Ne sait pas',v_gr:'Fait',v_gr_y:'2025',v_co:'Fait',v_co_y:'2024, 4 doses',v_pn:'Non fait',v_zo:'Non fait',v_vrs:'Non fait',vsuite:['Rattrapage à signaler au médecin','Patient informé'],freq:'Non',modif:'Non',anti:'Non',ipp:'Oui',ipp_d:'Oméprazole 20 mg',ippi:'Inconnue',inh:'Oui',inh_d:'Salbutamol',ho:'Oui',ho_d:'Paracétamol',
+  gere:'Famille',pil:'Oui',ix_src:['RCP (base publique)','Thériaque'],ix_res:'Aucune interaction relevée',vsrc:['Patient'],v_dtp:'Ne sait pas',v_gr:'Fait',v_gr_y:'2025',v_co:'Fait',v_co_y:'2024, 4 doses',v_pn:'Non fait',v_zo:'Non fait',v_vrs:'Non fait',vsuite:['Rattrapage à signaler au médecin','Patient informé'],freq:'Non',modif:'Non',anti:'Non',ipp:'Oui',ipp_d:'Oméprazole 20 mg',ippc:['Sans indication'],inh:'Oui',inh_d:'Salbutamol',ho:'Oui',ho_d:'Paracétamol',
   o1:'0',o2:'2',o2q:'Metformine du soir',o4:'Le paracétamol',poids:'58',creat:'95',dfg:'48',form:'CKD-EPI',motif:'Chute à domicile',atcd:'HTA\nDiabète de type 2\nAsthme',
   chute:'Oui',nch:'2',qch:['Aucune'],trb:['Vision','Constipation'],tab:'Non',alc:'Non',deg:'Non',mod:['Aucun'],qinh:'Non',patho:['IRC'],p_irc:'G3a (45–59)'};
  MEDS=[
@@ -801,13 +814,48 @@ document.getElementById('pdf').addEventListener('click',async function(){
 });
 document.getElementById('redit').addEventListener('click',function(){document.getElementById('reader').classList.remove('on')});
 document.getElementById('preview').addEventListener('click',function(){showReader('Aperçu de la fiche')});
-(async function(){var h=location.hash||'';var i=h.indexOf('f=');if(i<0)return;
- try{fromPayload(await unpack(decodeURIComponent(h.slice(i+2))));render();showReader('Fiche reçue par QR code. Fermer pour la modifier.')}
- catch(e){alert('Cette fiche n\u2019a pas pu être lue.')}})();
+async function importHash(){var h=location.hash||'';var i=h.indexOf('f=');if(i<0)return;
+ try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}
+ try{var inc=await unpack(decodeURIComponent(h.slice(i+2)));syncCur();
+  var nm=((inc.s||{}).nom||'').trim(),same=null;if(nm)FICHES.forEach(function(f){if(((f.p&&f.p.s&&f.p.s.nom)||'').trim()===nm)same=f});
+  var tgt=null;
+  if(same&&confirm('La fiche « '+nm+' » est déjà sur cet appareil.\nOK = la mettre à jour avec la version du QR code\nAnnuler = l\u2019ajouter comme nouveau patient'))tgt=same;
+  else{var c=curF();if(c&&isEmptyP(c.p))tgt=c;else{tgt={id:newId()};FICHES.push(tgt)}}
+  tgt.p=inc;tgt.t=Date.now();CUR=tgt.id;fromPayload(inc);render();showReader('Fiche reçue par QR code. Fermer pour la modifier.')}
+ catch(e){alert('Cette fiche n\u2019a pas pu être lue.')}}
+importHash();window.addEventListener('hashchange',importHash);
 
 function openVac(){var a=filled(S.age)?S.age+' ans':'non renseigné';var d=filled(S.ddn)?' · né(e) le '+isoFr(S.ddn):'';
  document.getElementById('vage').textContent='Âge du patient : '+a+d;document.getElementById('vacm').classList.add('on');document.getElementById('vacx').focus()}
 document.getElementById('vacx').addEventListener('click',function(){document.getElementById('vacm').classList.remove('on')});
+var SKEY='concil_fiches_v2',OLDKEY='concil_fiche_v1',PKEY='concil_prefs_v1',MAXAGE=12*3600*1000;
+var FICHES=[],CUR=null;
+function newId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function hasData(){return Object.keys(S).some(function(k){return k!=='uf'&&k!=='par'&&filled(S[k])})||MEDS.some(function(m){return filled(m.dci)})}
+function curF(){for(var i=0;i<FICHES.length;i++)if(FICHES[i].id===CUR)return FICHES[i];return null}
+function syncCur(){var f=curF();if(!f){f={id:newId()};FICHES.push(f);CUR=f.id}f.p=payload();f.t=Date.now()}
+function saveFiche(){try{syncCur();sessionStorage.setItem(SKEY,JSON.stringify({cur:CUR,list:FICHES}));localStorage.setItem(PKEY,JSON.stringify({uf:S.uf||'',par:S.par||''}))}catch(e){}}
+function loadPrefs(){try{var p=JSON.parse(localStorage.getItem(PKEY)||'{}');return {uf:p.uf||'',par:p.par||''}}catch(e){return {uf:'',par:''}}}
+function loadFiche(){try{var x=JSON.parse(sessionStorage.getItem(SKEY)||'null');
+  if(!x){var o=JSON.parse(sessionStorage.getItem(OLDKEY)||'null');if(o){x={cur:'a',list:[{id:'a',t:o.t,p:o.p}]};sessionStorage.removeItem(OLDKEY)}}
+  if(!x)return false;var now=Date.now();FICHES=(x.list||[]).filter(function(f){return f&&f.p&&now-f.t<=MAXAGE});
+  if(!FICHES.length)return false;var f=null;for(var i=0;i<FICHES.length;i++)if(FICHES[i].id===x.cur)f=FICHES[i];if(!f)f=FICHES[FICHES.length-1];
+  CUR=f.id;fromPayload(f.p);return true}catch(e){FICHES=[];return false}}
+function freshState(){var p=loadPrefs();S={};if(p.uf)S.uf=p.uf;if(p.par)S.par=p.par;MEDS=[]}
+function isEmptyP(pl){var k=Object.keys((pl&&pl.s)||{}).filter(function(x){return x!=='uf'&&x!=='par'});return !k.length&&!((pl&&pl.m)||[]).length}
+function addPatient(){syncCur();freshState();var f={id:newId(),t:Date.now()};FICHES.push(f);CUR=f.id;render();window.scrollTo(0,0)}
+function switchTo(id){if(id===CUR)return;syncCur();var f=null;FICHES.forEach(function(x){if(x.id===id)f=x});if(!f)return;CUR=id;fromPayload(f.p);render();window.scrollTo(0,0)}
+function deleteCur(){FICHES=FICHES.filter(function(x){return x.id!==CUR});if(FICHES.length){var f=FICHES[FICHES.length-1];CUR=f.id;fromPayload(f.p)}else{CUR=null;freshState()}render();window.scrollTo(0,0)}
+function ficheLabel(f){var pl=f.id===CUR?{s:S}:f.p;var n=(pl&&pl.s&&pl.s.nom)||'';return filled(n)?n.trim():'Sans nom'}
+var BARBOX=null;
+function drawBar(){if(!BARBOX)return;BARBOX.innerHTML='';
+ BARBOX.appendChild(el('div',{cls:'svch',text:'Patients en cours ('+FICHES.length+')'}));
+ var c=el('div',{cls:'chips'});
+ FICHES.forEach(function(f){c.appendChild(el('button',{cls:'chip',type:'button',text:ficheLabel(f),'aria-pressed':f.id===CUR?'true':'false',onclick:function(){switchTo(f.id)}}))});
+ c.appendChild(el('button',{cls:'chip addp',type:'button',text:'+ Nouveau patient',onclick:addPatient}));
+ BARBOX.appendChild(c)}
+
+if(!loadFiche())freshState();
 render();
 </script>
 <div class="print" id="print" aria-hidden="true"></div>
